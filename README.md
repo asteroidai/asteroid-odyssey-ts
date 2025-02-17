@@ -5,15 +5,44 @@ This is a TypeScript SDK for the Asteroid Agents API.
 ## Installation
 
 ```bash
-npm install @asteroid-ai/agents-sdk
+npm install asteroid-sdk
 ```
 
 ## Usage
 
-```ts
-import { AgentsSDK } from '@asteroid-ai/agents-sdk';
+Below is a minimal example showing how to start an agent workflow, poll for its status until it's completed, and then retrieve its result:
 
-const sdk = new AgentsSDK('astS6bGyn8XxGMnHLELziKU2zCo5Pr2RzMCDCyRFhE3yNNkA4MdPEc58NKZJAeed');
+```ts
+import { AsteroidAgents } from 'asteroid-sdk';
+
+const asteroid = new AsteroidAgents('YOUR_API_KEY'); // Generate a key at https://platform.asteroid.ai
+
+const workflowID = 'YOUR_WORKFLOW_ID'; // You can create a workflow at https://platform.asteroid.ai or use the .createWorkflow() method
+
+async function runWorkflowExample() {
+  try {
+    // Start the workflow
+    const runID = await asteroid.runWorkflow(workflowID, { name: 'Alice' });
+    console.log('Workflow run initiated with ID:', runID);
+
+    // Poll for the workflow status until it completes
+    while (true) {
+      const status = await asteroid.getRunStatus(runID);
+      console.log('Current workflow status:', status);
+      if (status === 'completed') break;
+      // Wait for 1 second before checking again
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
+    // Retrieve the result after completion
+    const result = await asteroid.getRunResult(runID);
+    console.log('Workflow completed. Result:', result);
+  } catch (error) {
+    console.error('Error executing the workflow:', error);
+  }
+}
+
+runWorkflowExample();
 ```
 
 ## Development
