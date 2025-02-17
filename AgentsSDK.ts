@@ -5,18 +5,18 @@ import {
   OptimiserService,
   WorkflowService,
   OpenAPI,
-} from './asteroid/agents/client-sdk';
-import type { Agent } from './asteroid/agents/client-sdk/models/Agent';
-import type { CreateWorkflowRequest } from './asteroid/agents/client-sdk/models/CreateWorkflowRequest';
-import type { WorkflowExecutionRequest } from './asteroid/agents/client-sdk/models/WorkflowExecutionRequest';
-import type { WorkflowExecution } from './asteroid/agents/client-sdk/models/WorkflowExecution';
-import type { OptimisationRequest } from './asteroid/agents/client-sdk/models/OptimisationRequest';
+} from './src/generated/agents';
+import type { Agent } from './src/generated/agents/models/Agent';
+import type { CreateWorkflowRequest } from './src/generated/agents/models/CreateWorkflowRequest';
+import type { WorkflowExecutionRequest } from './src/generated/agents/models/WorkflowExecutionRequest';
+import type { WorkflowExecution } from './src/generated/agents/models/WorkflowExecution';
+import type { OptimisationRequest } from './src/generated/agents/models/OptimisationRequest';
 
 /**
  * AgentsSDK provides a simple interface for interacting with the Asteroid Agents API.
  * It wraps the generated client services and exposes high-level methods.
  */
-export class AgentsSDK {
+export class AsteroidAgents {
   /**
    * Optionally pass a custom OpenAPI config. For instance, to change the API base URL.
    * @param config Partial OpenAPI config values.
