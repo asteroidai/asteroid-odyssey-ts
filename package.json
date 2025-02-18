@@ -1,6 +1,6 @@
 {
   "name": "asteroid-sdk",
-  "version": "1.0.0",
+  "version": "v1.0.1",
   "description": "SDK for interacting with Asteroid Agents API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -26,5 +26,8 @@
     "@types/node": "^22.13.4",
     "openapi-typescript-codegen": "^0.29.0",
     "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "asteroid-sdk": "^1.0.1"
   }
 }

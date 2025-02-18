@@ -99,7 +99,7 @@
   },
   "include": [
     "examples/index.ts",
-    "Asteroid.ts"
+    "src/index.ts"
   ],
   "exclude": [
     "node_modules",

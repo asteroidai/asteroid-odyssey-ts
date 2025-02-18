@@ -1,4 +1,4 @@
-import { AsteroidAgents } from '../Asteroid';
+import { AsteroidAgents } from '../src';
 
 const asteroid = new AsteroidAgents(
   'astahQigcDcuTs1o6JdRE9TYFBqix5HdG9rN3xLeKmJ0sPVgsHBjytzuhn2oJaW1',

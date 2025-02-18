@@ -5,21 +5,21 @@ import {
   OptimiserService as AgentsOptimiserService,
   WorkflowService as AgentsWorkflowService,
   OpenAPI as AgentsOpenAPI
-} from './src/generated/agents';
+} from './generated/agents';
 import {
   ApiService as PlatformApiService,
   RunService as PlatformRunService,
   OpenAPI as PlatformOpenAPI,
   ImproveService as PlatformImproveService
-} from './src/generated/platform';
-import type { Agent } from './src/generated/agents/models/Agent';
-import type { CreateWorkflowRequest } from './src/generated/agents/models/CreateWorkflowRequest';
-import type { WorkflowExecutionRequest } from './src/generated/agents/models/WorkflowExecutionRequest';
-import type { WorkflowExecution } from './src/generated/agents/models/WorkflowExecution';
-import type { OptimisationRequest } from './src/generated/agents/models/OptimisationRequest';
-import type { Status } from './src/generated/platform/models/Status';
-import type { FeedbackRequest } from './src/generated/platform/models/FeedbackRequest';
-import type { Feedback } from './src/generated/platform/models/Feedback';
+} from './generated/platform';
+import type { Agent } from './generated/agents/models/Agent';
+import type { CreateWorkflowRequest } from './generated/agents/models/CreateWorkflowRequest';
+import type { WorkflowExecutionRequest } from './generated/agents/models/WorkflowExecutionRequest';
+import type { WorkflowExecution } from './generated/agents/models/WorkflowExecution';
+import type { OptimisationRequest } from './generated/agents/models/OptimisationRequest';
+import type { Status } from './generated/platform/models/Status';
+import type { FeedbackRequest } from './generated/platform/models/FeedbackRequest';
+import type { Feedback } from './generated/platform/models/Feedback';
 /**
  * AgentsSDK provides a simple interface for interacting with the Asteroid Agents API.
  * It wraps the generated client services and exposes high-level methods.
