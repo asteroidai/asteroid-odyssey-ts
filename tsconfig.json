@@ -98,7 +98,6 @@
     "skipLibCheck": true /* Skip type checking all .d.ts files. */
   },
   "include": [
-    "examples/index.ts",
     "src/index.ts"
   ],
   "exclude": [
