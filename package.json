@@ -1,5 +1,5 @@
 {
-  "name": "asteroid-sdk",
+  "name": "asteroid-odyssey",
   "version": "v1.0.4",
   "description": "SDK for interacting with Asteroid Agents API",
   "main": "dist/index.js",

@@ -15,5 +15,18 @@ export type CreateWorkflowRequest = {
      * The prompts for the workflow. They can have variables in them. They will be merged with the dynamic data passed when the workflow is executed.
      */
     prompts: Array<string>;
+    /**
+     * The Language Model Provider for the Workflow
+     */
+    provider: CreateWorkflowRequest.provider;
 };
+export namespace CreateWorkflowRequest {
+    /**
+     * The Language Model Provider for the Workflow
+     */
+    export enum provider {
+        OPENAI = 'openai',
+        ANTHROPIC = 'anthropic',
+    }
+}
 
