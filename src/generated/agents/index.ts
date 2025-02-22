@@ -8,7 +8,7 @@ export { OpenAPI } from './core/OpenAPI';
 export type { OpenAPIConfig } from './core/OpenAPI';
 
 export type { Agent } from './models/Agent';
-export type { CreateWorkflowRequest } from './models/CreateWorkflowRequest';
+export { CreateWorkflowRequest } from './models/CreateWorkflowRequest';
 export type { Execution } from './models/Execution';
 export type { OptimisationRequest } from './models/OptimisationRequest';
 export type { Workflow } from './models/Workflow';

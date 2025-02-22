@@ -25,6 +25,7 @@ export { FailureCategory } from './models/FailureCategory';
 export { FailureReport } from './models/FailureReport';
 export type { Feedback } from './models/Feedback';
 export type { FeedbackRequest } from './models/FeedbackRequest';
+export type { FileURL } from './models/FileURL';
 export type { HubStats } from './models/HubStats';
 export { MessageRole } from './models/MessageRole';
 export { MessageType } from './models/MessageType';

@@ -5,6 +5,7 @@
 import type { AsteroidChat } from '../models/AsteroidChat';
 import type { AsteroidMessage } from '../models/AsteroidMessage';
 import type { ChatIds } from '../models/ChatIds';
+import type { FileURL } from '../models/FileURL';
 import type { Run } from '../models/Run';
 import type { Status } from '../models/Status';
 import type { CancelablePromise } from '../core/CancelablePromise';
@@ -222,6 +223,46 @@ export class RunService {
             errors: {
                 400: `Bad request`,
                 404: `Run not found`,
+            },
+        });
+    }
+    /**
+     * Get a signed URL to create a file for a run
+     * @param runId
+     * @param requestBody
+     * @returns string File created
+     * @throws ApiError
+     */
+    public static getCreateFileUrl(
+        runId: string,
+        requestBody: {
+            file_name?: string;
+        },
+    ): CancelablePromise<string> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/run/{run_id}/get_create_file_url',
+            path: {
+                'run_id': runId,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Get a signed URL to fetch a file for a run
+     * @param runId
+     * @returns FileURL An array of signed URLs to fetch files for a run
+     * @throws ApiError
+     */
+    public static getFetchFileUrLs(
+        runId: string,
+    ): CancelablePromise<Array<FileURL>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/run/{run_id}/get_fetch_file_urls',
+            path: {
+                'run_id': runId,
             },
         });
     }

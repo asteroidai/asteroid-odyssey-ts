@@ -1,25 +1,23 @@
 import {
-  ApiService as AgentsApiService,
   AgentService as AgentsAgentService,
+  ApiService as AgentsApiService,
   DefaultService as AgentsDefaultService,
-  OptimiserService as AgentsOptimiserService,
-  WorkflowService as AgentsWorkflowService,
-  OpenAPI as AgentsOpenAPI
+  OpenAPI as AgentsOpenAPI,
+  WorkflowService as AgentsWorkflowService
 } from './generated/agents';
 import {
-  ApiService as PlatformApiService,
-  RunService as PlatformRunService,
+  ImproveService as PlatformImproveService,
   OpenAPI as PlatformOpenAPI,
-  ImproveService as PlatformImproveService
+  RunService as PlatformRunService
 } from './generated/platform';
-import type { Agent } from './generated/agents/models/Agent';
-import type { CreateWorkflowRequest } from './generated/agents/models/CreateWorkflowRequest';
-import type { WorkflowExecutionRequest } from './generated/agents/models/WorkflowExecutionRequest';
-import type { WorkflowExecution } from './generated/agents/models/WorkflowExecution';
-import type { OptimisationRequest } from './generated/agents/models/OptimisationRequest';
-import type { Status } from './generated/platform/models/Status';
-import type { FeedbackRequest } from './generated/platform/models/FeedbackRequest';
-import type { Feedback } from './generated/platform/models/Feedback';
+import type {Agent} from './generated/agents/models/Agent';
+import type {CreateWorkflowRequest} from './generated/agents/models/CreateWorkflowRequest';
+import type {WorkflowExecutionRequest} from './generated/agents/models/WorkflowExecutionRequest';
+import type {WorkflowExecution} from './generated/agents/models/WorkflowExecution';
+import type {Status} from './generated/platform/models/Status';
+import type {FeedbackRequest} from './generated/platform/models/FeedbackRequest';
+import type {Feedback} from './generated/platform/models/Feedback';
+
 /**
  * AgentsSDK provides a simple interface for interacting with the Asteroid Agents API.
  * It wraps the generated client services and exposes high-level methods.
