@@ -31,6 +31,8 @@ export class AsteroidAgents {
     // We use a custom headers for the API keys
     PlatformOpenAPI.HEADERS = { 'X-Asteroid-Api-Key': apiKey };
     AgentsOpenAPI.HEADERS = { 'X-Asteroid-Agents-Api-Key': apiKey };
+    AgentsOpenAPI.BASE = 'https://odyssey.asteroid.ai/api/v1';
+    PlatformOpenAPI.BASE = 'https://platform.asteroid.ai/api/v1';
 
     if (agentsConfig) {
       Object.assign(AgentsOpenAPI, agentsConfig);
