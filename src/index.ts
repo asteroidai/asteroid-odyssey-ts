@@ -10,13 +10,13 @@ import {
   OpenAPI as PlatformOpenAPI,
   RunService as PlatformRunService
 } from './generated/platform';
-import type {Agent} from './generated/agents/models/Agent';
-import type {CreateWorkflowRequest} from './generated/agents/models/CreateWorkflowRequest';
-import type {WorkflowExecutionRequest} from './generated/agents/models/WorkflowExecutionRequest';
-import type {WorkflowExecution} from './generated/agents/models/WorkflowExecution';
-import type {Status} from './generated/platform/models/Status';
-import type {FeedbackRequest} from './generated/platform/models/FeedbackRequest';
-import type {Feedback} from './generated/platform/models/Feedback';
+import type { Agent } from './generated/agents/models/Agent';
+import type { CreateWorkflowRequest } from './generated/agents/models/CreateWorkflowRequest';
+import type { WorkflowExecutionRequest } from './generated/agents/models/WorkflowExecutionRequest';
+import type { WorkflowExecution } from './generated/agents/models/WorkflowExecution';
+import type { Status } from './generated/platform/models/Status';
+import type { FeedbackRequest } from './generated/platform/models/FeedbackRequest';
+import type { Feedback } from './generated/platform/models/Feedback';
 
 /**
  * AgentsSDK provides a simple interface for interacting with the Asteroid Agents API.
@@ -91,7 +91,7 @@ export class AsteroidAgents {
    * @returns An array containing workflow executions.
    */
   async getWorkflowRuns(): Promise<WorkflowExecution[]> {
-    return AgentsWorkflowService.getWorkflowExecutions();
+    return AgentsWorkflowService.getWorkflowExecutions("ceres");
   }
 
   /**
