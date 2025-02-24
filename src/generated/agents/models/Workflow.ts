@@ -12,6 +12,10 @@ export type Workflow = {
      */
     agent_id?: string;
     /**
+     * The date and time the workflow was created.
+     */
+    created_at?: string;
+    /**
      * Workflow name.
      */
     name?: string;

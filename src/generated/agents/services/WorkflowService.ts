@@ -34,13 +34,19 @@ export class WorkflowService {
     }
     /**
      * Get all workflows and their executions
+     * @param agentName
      * @returns WorkflowExecution List of workflow executions
      * @throws ApiError
      */
-    public static getWorkflowExecutions(): CancelablePromise<Array<WorkflowExecution>> {
+    public static getWorkflowExecutions(
+        agentName: string,
+    ): CancelablePromise<Array<WorkflowExecution>> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/workflow_executions',
+            url: '/workflow_executions/{agent_name}',
+            path: {
+                'agent_name': agentName,
+            },
         });
     }
 }
