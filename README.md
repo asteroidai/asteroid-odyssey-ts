@@ -5,7 +5,7 @@ This is a TypeScript SDK for the Asteroid Agents API.
 ## Installation
 
 ```bash
-npm install asteroid-sdk
+npm install asteroid-odyssey
 ```
 
 ## Usage
