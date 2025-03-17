@@ -1,128 +1,170 @@
-import {
-  AgentService as AgentsAgentService,
-  ApiService as AgentsApiService,
-  DefaultService as AgentsDefaultService,
-  OpenAPI as AgentsOpenAPI,
-  WorkflowService as AgentsWorkflowService
-} from './generated/agents';
-import {
-  ImproveService as PlatformImproveService,
-  OpenAPI as PlatformOpenAPI,
-  RunService as PlatformRunService
-} from './generated/platform';
-import type { Agent } from './generated/agents/models/Agent';
-import type { CreateWorkflowRequest } from './generated/agents/models/CreateWorkflowRequest';
-import type { WorkflowExecutionRequest } from './generated/agents/models/WorkflowExecutionRequest';
-import type { WorkflowExecution } from './generated/agents/models/WorkflowExecution';
-import type { Status } from './generated/platform/models/Status';
-import type { FeedbackRequest } from './generated/platform/models/FeedbackRequest';
-import type { Feedback } from './generated/platform/models/Feedback';
+import { createClient } from '@hey-api/client-fetch';
+import * as AgentsSDK from './generated/agents/sdk.gen';
+import type { Client } from '@hey-api/client-fetch';
+import type {
+  CreateWorkflowRequest,
+  WorkflowExecutionRequest,
+  Execution
+} from './generated/agents/types.gen';
 
 /**
- * AgentsSDK provides a simple interface for interacting with the Asteroid Agents API.
- * It wraps the generated client services and exposes high-level methods.
+ * Create an API client with a provided API key.
+ *
+ * @param apiKey - Your API key.
+ * @returns A configured API client.
+ *
+ * @example
+ * const client = AsteroidClient('your-api-key');
  */
-export class AsteroidAgents {
-  /**
-   * Optionally pass a custom OpenAPI config. For instance, to change the API base URL.
-   * @param config Partial OpenAPI config values.
-   */
-  constructor(apiKey: string, agentsConfig?: Partial<typeof AgentsOpenAPI>, platformConfig?: Partial<typeof PlatformOpenAPI>) {
-    // We use a custom headers for the API keys
-    PlatformOpenAPI.HEADERS = { 'X-Asteroid-Api-Key': apiKey };
-    AgentsOpenAPI.HEADERS = { 'X-Asteroid-Agents-Api-Key': apiKey };
-    AgentsOpenAPI.BASE = 'https://odyssey.asteroid.ai/api/v1';
-    PlatformOpenAPI.BASE = 'https://api.asteroid.ai/api/v1';
-
-    if (agentsConfig) {
-      Object.assign(AgentsOpenAPI, agentsConfig);
+export const AsteroidClient = (apiKey: string): Client => {
+  return createClient({
+    baseUrl: 'http://localhost:9090/api/v1',
+    // baseUrl: 'https://odyssey.asteroid.ai/api/v1',
+    headers: {
+      'X-Asteroid-Agents-Api-Key': apiKey
     }
-    if (platformConfig) {
-      Object.assign(PlatformOpenAPI, platformConfig);
-    }
+  });
+};
+
+/**
+ * Create a new workflow for a given agent.
+ *
+ * @param client - The API client.
+ * @param agentName - The name of the agent.
+ * @param workflowDetails - The workflow details.
+ * @returns The ID of the created workflow.
+ *
+ * @example
+ * const workflowId = await createNewWorkflow(client, 'my-agent', {
+ *    name: "Example Workflow",
+ *    result_schema: {},
+ *    fields: { exampleField: "value" },
+ *    prompts: ["Enter some data:"],
+ *    provider: 'openai'
+ * });
+ */
+export const createNewWorkflow = async (
+  client: Client,
+  agentName: string,
+  workflowDetails: CreateWorkflowRequest
+): Promise<string> => {
+  const response = await AgentsSDK.createWorkflow({
+    client,
+    path: { agent_name: agentName },
+    body: workflowDetails,
+  });
+
+  if (response.error) {
+    console.log(response.error);
   }
 
-  /**
-   * Retrieves the OpenAPI schema from the API.
-   * @returns The OpenAPI specification.
-   */
-  async getOpenApiSchema(): Promise<any> {
-    return AgentsApiService.getOpenApi();
+  return response.data as string;
+};
+
+/**
+ * Execute an existing workflow.
+ *
+ * @param client - The API client.
+ * @param workflowId - The workflow identifier.
+ * @param executionData - The dynamic data to merge with the workflow.
+ * @returns The execution ID.
+ *
+ * @example
+ * const executionId = await executeWorkflowById(client, workflowId, { input: "some dynamic value" });
+ */
+export const executeWorkflowById = async (
+  client: Client,
+  workflowId: string,
+  executionData: WorkflowExecutionRequest
+): Promise<string> => {
+  const response = await AgentsSDK.executeWorkflow({
+    client,
+    path: { workflow_id: workflowId },
+    body: executionData,
+  });
+
+  if (response.error) {
+    throw new Error(response.error as string);
   }
 
-  /**
-   * Checks the health of the API.
-   * @returns An object containing the health status.
-   */
-  async healthCheck(): Promise<{ status?: string }> {
-    return AgentsDefaultService.healthCheck();
+  return response.data as string;
+};
+
+/**
+ * Get the current status and details for a workflow execution.
+ *
+ * @param client - The API client.
+ * @param executionId - The execution identifier.
+ * @returns The execution details.
+ *
+ * @example
+ * const execution = await getExecutionStatus(client, executionId);
+ * console.log(execution.status);
+ */
+export const getExecutionStatus = async (
+  client: Client,
+  executionId: string
+): Promise<Execution> => {
+  const execution = await AgentsSDK.getExecution({
+    client,
+    path: { id: executionId },
+  });
+
+  if (execution.error) {
+    throw new Error(execution.error as string);
   }
 
-  /**
-   * Retrieves a list of all agents.
-   * @returns An array of agents.
-   */
-  async getAgents(): Promise<Agent[]> {
-    return AgentsAgentService.getAgents();
+  return execution.data as Execution;
+};
+
+/**
+ * Get the progress updates for an execution.
+ *
+ * @param client - The API client.
+ * @param executionId - The execution identifier.
+ * @returns Array of progress update objects.
+ *
+ * @example
+ * const progressUpdates = await getWorkflowExecutionProgress(client, executionId);
+ * console.log(progressUpdates);
+ */
+export const getWorkflowExecutionProgress = async (
+  client: Client,
+  executionId: string
+): Promise<Array<{ execution_id: string; progress: string; created_at: string }>> => {
+  const progressUpdates = await AgentsSDK.getExecutionProgress({
+    client,
+    path: { id: executionId },
+  });
+
+  if (progressUpdates.error) {
+    throw new Error(progressUpdates.error as string);
   }
 
-  /**
-   * Creates a new workflow for a given agent.
-   * @param agentName The name of the agent for which the workflow is created.
-   * @param request The workflow creation request.
-   * @returns The ID of the newly created workflow.
-   */
-  async createWorkflow(agentName: string, request: CreateWorkflowRequest): Promise<string> {
-    return AgentsDefaultService.createWorkflow(agentName, request);
-  }
+  return progressUpdates.data as Array<{ execution_id: string; progress: string; created_at: string }>;
+};
 
-  /**
-   * Executes a saved workflow for an agent.
-   * @param workflowId The ID of the workflow to execute.
-   * @param request The execution request containing dynamic values.
-   * @returns A string indicating that the job was queued.
-   */
-  async runWorkflow(workflowId: string, request: WorkflowExecutionRequest): Promise<string> {
-    return AgentsWorkflowService.executeWorkflow(workflowId, request);
-  }
+/**
+ * Get the final result of a workflow execution.
+ *
+ * @param client - The API client.
+ * @param executionId - The execution identifier.
+ * @returns The result object of the execution.
+ *
+ * @example
+ * const result = await getWorkflowResult(client, executionId);
+ * console.log(result);
+ */
+export const getWorkflowResult = async (
+  client: Client,
+  executionId: string
+): Promise<Record<string, unknown>> => {
+  const execution = await getExecutionStatus(client, executionId);
+  return execution.result;
+};
 
-  /**
-   * Retrieves all workflows along with their executions.
-   * @returns An array containing workflow executions.
-   */
-  async getWorkflowRuns(): Promise<WorkflowExecution[]> {
-    return AgentsWorkflowService.getWorkflowExecutions("ceres");
-  }
-
-  /**
-   * Retrieves the status of a run.
-   * @param runId The ID of the run to retrieve the status for.
-   * @returns The status of the run.
-   */
-  async getRunStatus(runId: string): Promise<Status> {
-    return PlatformRunService.getRunStatus(runId);
-  }
-
-  async getRunResult(runId: string): Promise<string> {
-    const run = await PlatformRunService.getRun(runId);
-    const metadata = run.metadata;
-    if (!metadata) {
-      throw new Error('Run metadata not found');
-    }
-    const result = metadata.final_result;
-    if (!result) {
-      throw new Error('Run result not found');
-    }
-    return result;
-  }
-
-  /**
-   * Creates feedback for a run.
-   * @param runId The ID of the run to create feedback for.
-   * @param request The feedback request.
-   * @returns The feedback created.
-   */
-  async createRunFeedback(runId: string, request: FeedbackRequest): Promise<Feedback> {
-    return PlatformImproveService.createFeedback(runId, request);
-  }
-}
+/**
+ * Optionally, re-export all generated functions and types.
+ */
+export * from './generated/agents/sdk.gen';
+export * from './generated/agents/types.gen';
