@@ -12,7 +12,8 @@
     "generate-platform": "openapi -i ../platform/server/openapi.yaml -o src/generated/platform",
     "generate": "npm run generate-agents && npm run generate-platform",
     "build": "tsc",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "openapi-ts": "openapi-ts"
   },
   "keywords": [
     "asteroid",
@@ -23,8 +24,12 @@
   "author": "Asteroid",
   "license": "MIT",
   "devDependencies": {
+    "@hey-api/openapi-ts": "^0.64.12",
     "@types/node": "^22.13.4",
     "openapi-typescript-codegen": "^0.29.0",
     "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@hey-api/client-fetch": "^0.8.3"
   }
 }
