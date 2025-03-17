@@ -18,8 +18,7 @@ import type {
  */
 export const AsteroidClient = (apiKey: string): Client => {
   return createClient({
-    baseUrl: 'http://localhost:9090/api/v1',
-    // baseUrl: 'https://odyssey.asteroid.ai/api/v1',
+    baseUrl: 'https://odyssey.asteroid.ai/api/v1',
     headers: {
       'X-Asteroid-Agents-Api-Key': apiKey
     }
@@ -56,6 +55,7 @@ export const createNewWorkflow = async (
 
   if (response.error) {
     console.log(response.error);
+    throw new Error(response.error as string);
   }
 
   return response.data as string;

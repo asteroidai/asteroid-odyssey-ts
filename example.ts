@@ -1,7 +1,7 @@
 import { AsteroidClient, createNewWorkflow, executeWorkflowById, getExecutionStatus, getWorkflowResult } from './src/index';
 
 (async () => {
-  const client = AsteroidClient('astKyDwk2a3Sd55tRmxkFHhl4su6Jo9s0HEccvRpzsHXzpiMbWP3jUoJ1RTS4Sbh');
+  const client = AsteroidClient('YOUR_API_KEY');
 
   // Create a new workflow for an agent.
   // Note that you don't need to do this every time. You should reuse the same workflow.
