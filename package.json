@@ -8,9 +8,6 @@
     "dist"
   ],
   "scripts": {
-    "generate-agents": "openapi -i ../agents/server/api/openapi.yaml -o src/generated/agents",
-    "generate-platform": "openapi -i ../platform/server/openapi.yaml -o src/generated/platform",
-    "generate": "npm run generate-agents && npm run generate-platform",
     "build": "tsc",
     "prepare": "npm run build",
     "openapi-ts": "openapi-ts"
