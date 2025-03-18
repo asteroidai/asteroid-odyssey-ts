@@ -47,6 +47,10 @@ export const createNewWorkflow = async (
   agentName: string,
   workflowDetails: CreateWorkflowRequest
 ): Promise<string> => {
+  // Add a workflow_name key to the workflowDetails.fields object
+  // This field is deprecated and will be removed in a future version.
+  workflowDetails.fields.workflow_name = workflowDetails.name;
+
   const response = await AgentsSDK.createWorkflow({
     client,
     path: { agent_name: agentName },
@@ -161,6 +165,49 @@ export const getWorkflowResult = async (
 ): Promise<Record<string, unknown>> => {
   const execution = await getExecutionStatus(client, executionId);
   return execution.result;
+};
+
+/**
+ * Waits for a workflow execution to reach a terminal state and returns the result.
+ * Continuously polls the execution status until it's either "completed", "cancelled", or "failed".
+ *
+ * @param client - The API client.
+ * @param executionId - The execution identifier.
+ * @param interval - Polling interval in milliseconds (default is 1000ms).
+ * @returns A promise that resolves with the workflow execution result if completed.
+ * @throws An error if the execution ends as "cancelled" or "failed".
+ *
+ * @example
+ * const result = await waitForExecutionResult(client, executionId, 2000);
+ */
+export const waitForExecutionResult = async (
+  client: Client,
+  executionId: string,
+  interval: number = 1000,
+  timeout: number = 3600000 // 1 hour
+): Promise<Record<string, unknown>> => {
+  var steps = Math.floor(timeout / interval);
+
+  // Keep polling the execution status until it's either "completed", "cancelled", or "failed".
+  while (steps > 0) {
+    const execution = await getExecutionStatus(client, executionId);
+    const currentStatus = execution.status?.status;
+
+    if (currentStatus === 'completed') {
+      return await getWorkflowResult(client, executionId);
+    } else if (currentStatus === 'failed' || currentStatus === 'cancelled') {
+      throw new Error(
+        `Execution ${executionId} ended with status: ${currentStatus}${execution.status?.reason ? ' - ' + execution.status.reason : ''
+        }`
+      );
+    }
+
+    // Wait for the specified interval before polling again
+    await new Promise(resolve => setTimeout(resolve, interval));
+    steps--;
+  }
+
+  throw new Error(`Execution ${executionId} timed out after ${timeout}ms`);
 };
 
 /**
