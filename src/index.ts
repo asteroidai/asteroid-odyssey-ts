@@ -16,9 +16,9 @@ import type {
  * @example
  * const client = AsteroidClient('your-api-key');
  */
-export const AsteroidClient = (apiKey: string): Client => {
+export const AsteroidClient = (apiKey: string, options?: { baseUrl?: string }): Client => {
   return createClient({
-    baseUrl: 'https://odyssey.asteroid.ai/api/v1',
+    baseUrl: options?.baseUrl || 'https://odyssey.asteroid.ai/api/v1',
     headers: {
       'X-Asteroid-Agents-Api-Key': apiKey
     }
