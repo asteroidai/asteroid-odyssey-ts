@@ -37,9 +37,9 @@ export const AsteroidClient = (apiKey: string, options?: { baseUrl?: string }): 
  * @example
  * const workflowId = await createNewWorkflow(client, 'my-agent', {
  *    name: "Example Workflow",
+ *    start_url: "https://google.com",
+ *    prompts: ["On Google, search for {{.website}} and sign in with {{.credentials}}"],
  *    result_schema: {},
- *    fields: { exampleField: "value" },
- *    prompts: ["Enter some data:"],
  *    provider: 'openai'
  * });
  */

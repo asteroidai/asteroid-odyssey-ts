@@ -58,14 +58,14 @@ export type CreateWorkflowRequest = {
      */
     name: string;
     /**
-     * The ID of the user that this workflow belongs to.
+     * Used to assign the workflow to a user. Do not use this field.
      */
     user_id?: string;
     result_schema: ResultSchema;
     /**
-     * Unused field for custom configuration
+     * Field for custom configuration. Do not use.
      */
-    fields: {
+    fields?: {
         [key: string]: unknown;
     };
     /**
