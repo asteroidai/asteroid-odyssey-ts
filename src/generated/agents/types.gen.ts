@@ -61,7 +61,7 @@ export type CreateWorkflowRequest = {
      * Used to assign the workflow to a user. Do not use this field.
      */
     user_id?: string;
-    result_schema: ResultSchema;
+    result_schema?: ResultSchema;
     /**
      * Field for custom configuration. Do not use.
      */
@@ -72,7 +72,7 @@ export type CreateWorkflowRequest = {
      * The prompts for the workflow. They can have variables in them. They will be merged with the dynamic data passed when the workflow is executed.
      */
     prompts: Array<string>;
-    workflow_options: UnresolvedWorkflowOptions;
+    workflow_options?: UnresolvedWorkflowOptions;
     /**
      * The Language Model Provider for the Workflow
      */
