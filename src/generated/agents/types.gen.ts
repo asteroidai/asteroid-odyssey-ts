@@ -36,13 +36,13 @@ export type Agent = {
      */
     visibility: string;
     /**
-     * The required fields for the agent
-     */
-    required_fields: Array<string>;
-    /**
      * The prompts for the agent
      */
     required_prompts: Array<string>;
+    /**
+     * The fields that must be provided when creating a workflow for a given agent
+     */
+    required_fields?: Array<string>;
 };
 
 /**
@@ -63,7 +63,7 @@ export type CreateWorkflowRequest = {
     user_id?: string;
     result_schema: ResultSchema;
     /**
-     * JSON object containing static workflow configuration (e.g. a prompt_template).
+     * Unused field for custom configuration
      */
     fields: {
         [key: string]: unknown;
@@ -72,10 +72,15 @@ export type CreateWorkflowRequest = {
      * The prompts for the workflow. They can have variables in them. They will be merged with the dynamic data passed when the workflow is executed.
      */
     prompts: Array<string>;
+    workflow_options: UnresolvedWorkflowOptions;
     /**
      * The Language Model Provider for the Workflow
      */
     provider: 'openai' | 'anthropic';
+    /**
+     * The URL to start the workflow.
+     */
+    start_url: string;
 };
 
 export type Workflow = {
@@ -101,12 +106,6 @@ export type Workflow = {
      */
     name: string;
     /**
-     * Workflow configuration.
-     */
-    fields: {
-        [key: string]: unknown;
-    };
-    /**
      * The prompts for the workflow. They can have variables in them. They will be merged with the dynamic data passed when the workflow is executed.
      */
     prompts: Array<string>;
@@ -114,6 +113,22 @@ export type Workflow = {
      * The variables in the prompts.
      */
     prompt_variables?: Array<string>;
+    /**
+     * Additional options for the workflow. See documentation for more details.
+     */
+    workflow_options?: {
+        [key: string]: unknown;
+    };
+    /**
+     * The URL to start the workflow.
+     */
+    start_url: string;
+    /**
+     * JSON object containing static workflow configuration (e.g. a prompt_template).
+     */
+    fields?: {
+        [key: string]: unknown;
+    };
 };
 
 export type WorkflowExecution = {
@@ -126,6 +141,29 @@ export type WorkflowExecution = {
  */
 export type WorkflowExecutionRequest = {
     [key: string]: unknown;
+};
+
+export type CredentialsRequest = {
+    credentials: Array<Credential>;
+};
+
+export type Credential = {
+    /**
+     * The credential name
+     */
+    name: string;
+    /**
+     * The encrypted credential
+     */
+    data: string;
+};
+
+export type CredentialsResponse = {
+    /**
+     * The name of the workflow
+     */
+    workflow_name: string;
+    credentials: Array<Credential>;
 };
 
 export type Execution = {
@@ -264,6 +302,101 @@ export type File = {
      * Signed URL to download the file.
      */
     signed_url: string;
+};
+
+/**
+ * A message given to the agent by the user
+ */
+export type UserMessage = {
+    /**
+     * Unique identifier for the message
+     */
+    id: string;
+    /**
+     * ID of the execution this message belongs to
+     */
+    execution_id: string;
+    /**
+     * ID of the user who created the message
+     */
+    user_id: string;
+    /**
+     * The message content
+     */
+    message: string;
+    /**
+     * When the message was created
+     */
+    created_at: string;
+    /**
+     * Whether the message has been injected into the agent's conversation
+     */
+    injected: boolean;
+    /**
+     * When the message was injected into the agent's conversation
+     */
+    injected_at: string;
+};
+
+export type CreateMessageRequest = {
+    /**
+     * The message content
+     */
+    message: string;
+};
+
+/**
+ * Optional workflow configuration options. All fields are optional and will use defaults if not specified.
+ */
+export type UnresolvedWorkflowOptions = {
+    /**
+     * Maximum number of iterations for the workflow
+     */
+    max_iterations?: number;
+    /**
+     * Timeout in seconds per step
+     */
+    timeout_per_step?: number;
+    /**
+     * Browser viewport width
+     */
+    viewport_width?: number;
+    /**
+     * Browser viewport height
+     */
+    viewport_height?: number;
+    /**
+     * Maximum retries for LLM calls
+     */
+    max_llm_retries?: number;
+    /**
+     * Delay between retries in seconds
+     */
+    llm_retry_delay?: number;
+    /**
+     * Maximum pause duration in minutes
+     */
+    max_pause_duration?: number;
+    /**
+     * Status check interval in seconds
+     */
+    status_check_interval?: number;
+    /**
+     * Temperature for LLM (0.0 to 1.0)
+     */
+    temperature?: number;
+    /**
+     * Prompt template for LLM
+     */
+    prompt_template?: string;
+    /**
+     * Allowed tools for LLM
+     */
+    allowed_tools?: Array<string>;
+    /**
+     * Require human approval to finish
+     */
+    require_human_approval_to_finish?: boolean;
 };
 
 export type GetOpenApiData = {
@@ -469,6 +602,93 @@ export type GetExecutionsForWorkflowResponses = {
 
 export type GetExecutionsForWorkflowResponse = GetExecutionsForWorkflowResponses[keyof GetExecutionsForWorkflowResponses];
 
+export type DeleteWorkflowCredentialsData = {
+    body?: never;
+    path: {
+        workflow_id: string;
+    };
+    query?: never;
+    url: '/workflow/{workflow_id}/credentials';
+};
+
+export type DeleteWorkflowCredentialsErrors = {
+    /**
+     * Workflow not found
+     */
+    404: unknown;
+};
+
+export type DeleteWorkflowCredentialsResponses = {
+    /**
+     * Credentials deleted successfully
+     */
+    200: unknown;
+};
+
+export type GetWorkflowCredentialsData = {
+    body?: never;
+    path: {
+        workflow_id: string;
+    };
+    query?: never;
+    url: '/workflow/{workflow_id}/credentials';
+};
+
+export type GetWorkflowCredentialsErrors = {
+    /**
+     * Workflow not found
+     */
+    404: unknown;
+};
+
+export type GetWorkflowCredentialsResponses = {
+    /**
+     * The workflow credentials
+     */
+    200: CredentialsResponse;
+};
+
+export type GetWorkflowCredentialsResponse = GetWorkflowCredentialsResponses[keyof GetWorkflowCredentialsResponses];
+
+export type AddWorkflowCredentialData = {
+    body: CredentialsRequest;
+    path: {
+        workflow_id: string;
+    };
+    query?: never;
+    url: '/workflow/{workflow_id}/credentials';
+};
+
+export type AddWorkflowCredentialResponses = {
+    /**
+     * Credentials set successfully
+     */
+    200: unknown;
+};
+
+export type GetCredentialsPublicKeyData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/credentials/public_key';
+};
+
+export type GetCredentialsPublicKeyErrors = {
+    /**
+     * Public key not found
+     */
+    404: unknown;
+};
+
+export type GetCredentialsPublicKeyResponses = {
+    /**
+     * The public key for credentials
+     */
+    200: string;
+};
+
+export type GetCredentialsPublicKeyResponse = GetCredentialsPublicKeyResponses[keyof GetCredentialsPublicKeyResponses];
+
 export type DeleteExecutionData = {
     body?: never;
     path: {
@@ -669,6 +889,79 @@ export type GetExecutionFilesResponses = {
 };
 
 export type GetExecutionFilesResponse = GetExecutionFilesResponses[keyof GetExecutionFilesResponses];
+
+export type GetWorkflowVersionsData = {
+    body?: never;
+    path: {
+        workflow_id: string;
+    };
+    query?: never;
+    url: '/workflow/{workflow_id}/versions';
+};
+
+export type GetWorkflowVersionsErrors = {
+    /**
+     * Workflow not found
+     */
+    404: unknown;
+};
+
+export type GetWorkflowVersionsResponses = {
+    /**
+     * List of workflow versions
+     */
+    200: Array<Workflow>;
+};
+
+export type GetWorkflowVersionsResponse = GetWorkflowVersionsResponses[keyof GetWorkflowVersionsResponses];
+
+export type GetExecutionUserMessagesData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/execution/{id}/user_messages';
+};
+
+export type GetExecutionUserMessagesErrors = {
+    /**
+     * Execution not found
+     */
+    404: unknown;
+};
+
+export type GetExecutionUserMessagesResponses = {
+    /**
+     * List of messages for the execution
+     */
+    200: Array<UserMessage>;
+};
+
+export type GetExecutionUserMessagesResponse = GetExecutionUserMessagesResponses[keyof GetExecutionUserMessagesResponses];
+
+export type CreateExecutionUserMessageData = {
+    body: CreateMessageRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/execution/{id}/user_messages';
+};
+
+export type CreateExecutionUserMessageErrors = {
+    /**
+     * Execution not found
+     */
+    404: unknown;
+};
+
+export type CreateExecutionUserMessageResponses = {
+    /**
+     * Message created successfully
+     */
+    201: unknown;
+};
 
 export type ClientOptions = {
     baseUrl: `${string}://${string}/api/v1` | (string & {});

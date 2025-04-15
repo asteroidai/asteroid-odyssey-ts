@@ -4,7 +4,8 @@ import type { Client } from '@hey-api/client-fetch';
 import type {
   CreateWorkflowRequest,
   WorkflowExecutionRequest,
-  Execution
+  Execution,
+  BrowserSession
 } from './generated/agents/types.gen';
 
 /**
@@ -47,10 +48,6 @@ export const createNewWorkflow = async (
   agentName: string,
   workflowDetails: CreateWorkflowRequest
 ): Promise<string> => {
-  // Add a workflow_name key to the workflowDetails.fields object
-  // This field is deprecated and will be removed in a future version.
-  workflowDetails.fields.workflow_name = workflowDetails.name;
-
   const response = await AgentsSDK.createWorkflow({
     client,
     path: { agent_name: agentName },
@@ -165,6 +162,29 @@ export const getWorkflowResult = async (
 ): Promise<Record<string, unknown>> => {
   const execution = await getExecutionStatus(client, executionId);
   return execution.result;
+};
+
+/**
+ * Get the browser session for an execution.
+ *
+ * @param client - The API client.
+ * @param executionId - The execution identifier.
+ * @returns The browser session.
+ */
+export const getBrowserSession = async (
+  client: Client,
+  executionId: string
+): Promise<BrowserSession> => {
+  const browserSession = await AgentsSDK.getBrowserSession({
+    client,
+    path: { id: executionId },
+  });
+
+  if (browserSession.error) {
+    throw new Error(browserSession.error as string);
+  }
+
+  return browserSession.data as BrowserSession;
 };
 
 /**
