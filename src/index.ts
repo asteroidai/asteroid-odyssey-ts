@@ -2,10 +2,9 @@ import { createClient } from '@hey-api/client-fetch';
 import * as AgentsSDK from './generated/agents/sdk.gen';
 import type { Client } from '@hey-api/client-fetch';
 import type {
-  CreateWorkflowRequest,
-  WorkflowExecutionRequest,
-  Execution,
-  BrowserSession
+  AgentExecutionRequest,
+  ExecutionStatusResponse,
+  ExecutionResultResponse
 } from './generated/agents/types.gen';
 
 /**
@@ -27,174 +26,100 @@ export const AsteroidClient = (apiKey: string, options?: { baseUrl?: string }): 
 };
 
 /**
- * Create a new workflow for a given agent.
+ * Execute an agent with the provided parameters.
  *
  * @param client - The API client.
- * @param agentName - The name of the agent.
- * @param workflowDetails - The workflow details.
- * @returns The ID of the created workflow.
- *
- * @example
- * const workflowId = await createNewWorkflow(client, 'my-agent', {
- *    name: "Example Workflow",
- *    start_url: "https://google.com",
- *    prompts: ["On Google, search for {{.website}} and sign in with {{.credentials}}"],
- *    result_schema: {},
- *    provider: 'openai'
- * });
- */
-export const createNewWorkflow = async (
-  client: Client,
-  agentName: string,
-  workflowDetails: CreateWorkflowRequest
-): Promise<string> => {
-  const response = await AgentsSDK.createWorkflow({
-    client,
-    path: { agent_name: agentName },
-    body: workflowDetails,
-  });
-
-  if (response.error) {
-    console.log(response.error);
-    throw new Error(response.error as string);
-  }
-
-  return response.data as string;
-};
-
-/**
- * Execute an existing workflow.
- *
- * @param client - The API client.
- * @param workflowId - The workflow identifier.
- * @param executionData - The dynamic data to merge with the workflow.
+ * @param agentId - The ID of the agent to execute.
+ * @param executionData - The execution parameters.
  * @returns The execution ID.
  *
  * @example
- * const executionId = await executeWorkflowById(client, workflowId, { input: "some dynamic value" });
+ * const executionId = await executeAgent(client, 'my-agent-id', { input: "some dynamic value" });
  */
-export const executeWorkflowById = async (
+export const executeAgent = async (
   client: Client,
-  workflowId: string,
-  executionData: WorkflowExecutionRequest
+  agentId: string,
+  executionData: AgentExecutionRequest
 ): Promise<string> => {
-  const response = await AgentsSDK.executeWorkflow({
+  const response = await AgentsSDK.executeAgent({
     client,
-    path: { workflow_id: workflowId },
+    path: { id: agentId },
     body: executionData,
   });
 
   if (response.error) {
-    throw new Error(response.error as string);
+    throw new Error((response.error as { error: string }).error);
   }
 
-  return response.data as string;
+  return response.data.execution_id;
 };
 
 /**
- * Get the current status and details for a workflow execution.
+ * Get the current status for an execution.
  *
  * @param client - The API client.
  * @param executionId - The execution identifier.
- * @returns The execution details.
+ * @returns The execution status details.
  *
  * @example
- * const execution = await getExecutionStatus(client, executionId);
- * console.log(execution.status);
+ * const status = await getExecutionStatus(client, executionId);
+ * console.log(status.status);
  */
 export const getExecutionStatus = async (
   client: Client,
   executionId: string
-): Promise<Execution> => {
-  const execution = await AgentsSDK.getExecution({
+): Promise<ExecutionStatusResponse> => {
+  const response = await AgentsSDK.getExecutionStatus({
     client,
     path: { id: executionId },
   });
 
-  if (execution.error) {
-    throw new Error(execution.error as string);
+  if (response.error) {
+    throw new Error((response.error as { error: string }).error);
   }
 
-  return execution.data as Execution;
+  return response.data;
 };
 
 /**
- * Get the progress updates for an execution.
- *
- * @param client - The API client.
- * @param executionId - The execution identifier.
- * @returns Array of progress update objects.
- *
- * @example
- * const progressUpdates = await getWorkflowExecutionProgress(client, executionId);
- * console.log(progressUpdates);
- */
-export const getWorkflowExecutionProgress = async (
-  client: Client,
-  executionId: string
-): Promise<Array<{ execution_id: string; progress: string; created_at: string }>> => {
-  const progressUpdates = await AgentsSDK.getExecutionProgress({
-    client,
-    path: { id: executionId },
-  });
-
-  if (progressUpdates.error) {
-    throw new Error(progressUpdates.error as string);
-  }
-
-  return progressUpdates.data as Array<{ execution_id: string; progress: string; created_at: string }>;
-};
-
-/**
- * Get the final result of a workflow execution.
+ * Get the final result of an execution.
  *
  * @param client - The API client.
  * @param executionId - The execution identifier.
  * @returns The result object of the execution.
  *
  * @example
- * const result = await getWorkflowResult(client, executionId);
+ * const result = await getExecutionResult(client, executionId);
  * console.log(result);
  */
-export const getWorkflowResult = async (
+export const getExecutionResult = async (
   client: Client,
   executionId: string
 ): Promise<Record<string, unknown>> => {
-  const execution = await getExecutionStatus(client, executionId);
-  return execution.result;
-};
-
-/**
- * Get the browser session for an execution.
- *
- * @param client - The API client.
- * @param executionId - The execution identifier.
- * @returns The browser session.
- */
-export const getBrowserSession = async (
-  client: Client,
-  executionId: string
-): Promise<BrowserSession> => {
-  const browserSession = await AgentsSDK.getBrowserSession({
+  const response = await AgentsSDK.getExecutionResult({
     client,
     path: { id: executionId },
   });
 
-  if (browserSession.error) {
-    throw new Error(browserSession.error as string);
+  if (response.error) {
+    throw new Error((response.error as { error: string }).error);
   }
 
-  return browserSession.data as BrowserSession;
+  if (response.data.error) {
+    throw new Error(response.data.error);
+  }
+
+  return response.data.result || {};
 };
 
 /**
- * Waits for a workflow execution to reach a terminal state and returns the result.
+ * Waits for an execution to reach a terminal state and returns the result.
  * Continuously polls the execution status until it's either "completed", "cancelled", or "failed".
  *
  * @param client - The API client.
  * @param executionId - The execution identifier.
  * @param interval - Polling interval in milliseconds (default is 1000ms).
- * @returns A promise that resolves with the workflow execution result if completed.
+ * @returns A promise that resolves with the execution result if completed.
  * @throws An error if the execution ends as "cancelled" or "failed".
  *
  * @example
@@ -210,15 +135,14 @@ export const waitForExecutionResult = async (
 
   // Keep polling the execution status until it's either "completed", "cancelled", or "failed".
   while (steps > 0) {
-    const execution = await getExecutionStatus(client, executionId);
-    const currentStatus = execution.status?.status;
+    const status = await getExecutionStatus(client, executionId);
+    const currentStatus = status.status;
 
     if (currentStatus === 'completed') {
-      return await getWorkflowResult(client, executionId);
+      return await getExecutionResult(client, executionId);
     } else if (currentStatus === 'failed' || currentStatus === 'cancelled') {
       throw new Error(
-        `Execution ${executionId} ended with status: ${currentStatus}${execution.status?.reason ? ' - ' + execution.status.reason : ''
-        }`
+        `Execution ${executionId} ended with status: ${currentStatus}${status.reason ? ' - ' + status.reason : ''}`
       );
     }
 
