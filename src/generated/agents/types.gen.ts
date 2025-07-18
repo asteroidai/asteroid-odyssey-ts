@@ -37,7 +37,8 @@ export type ExecutionResultResponse = {
     execution_id: string;
     status: Status;
     /**
-     * The execution result data (if execution is completed)
+     * (Deprecated, use execution_result instead) The structured result data from the execution. Contains the outcome, reasoning, final answer, and result.
+     * @deprecated
      */
     result?: {
         [key: string]: unknown;
@@ -46,18 +47,62 @@ export type ExecutionResultResponse = {
      * Error message (if execution failed)
      */
     error?: string;
+    execution_result?: ExecutionResult;
+};
+
+/**
+ * The result of an execution. Contains the outcome, reasoning, and result.
+ */
+export type ExecutionResult = {
+    /**
+     * The outcome of the execution (success or failure)
+     */
+    outcome?: 'success' | 'failure';
+    /**
+     * The reasoning behind the execution outcome
+     */
+    reasoning?: string;
+    /**
+     * The structured result data from the execution. This will follow the format defined in the result_schema of the agent.
+     */
+    result?: {
+        [key: string]: unknown;
+    };
 };
 
 /**
  * Status of the execution
  */
-export type Status = 'starting' | 'running' | 'paused' | 'completed' | 'cancelled' | 'failed' | 'awaiting_completion';
+export type Status = 'starting' | 'running' | 'paused' | 'completed' | 'cancelled' | 'failed' | 'awaiting_completion' | 'paused_by_agent';
 
 export type ErrorResponse = {
     /**
      * Error message
      */
     error: string;
+};
+
+export type BrowserSessionRecordingResponse = {
+    /**
+     * The URL of the browser session recording
+     */
+    recording_url: string;
+};
+
+/**
+ * Request to execute an agent with structured parameters including optional agent profile configuration
+ */
+export type StructuredAgentExecutionRequest = {
+    /**
+     * The ID of the browser profile to use
+     */
+    agent_profile_id?: string;
+    /**
+     * Dynamic data to be merged into the saved agent configuration.
+     */
+    dynamic_data?: {
+        [key: string]: unknown;
+    };
 };
 
 export type GetOpenApiData = {
@@ -73,6 +118,58 @@ export type GetOpenApiResponses = {
      */
     200: unknown;
 };
+
+export type UploadExecutionFilesData = {
+    body: {
+        /**
+         * Files to upload to the execution
+         */
+        files?: Array<Blob | File>;
+    };
+    path: {
+        /**
+         * The ID of the execution
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/execution/{id}/files';
+};
+
+export type UploadExecutionFilesErrors = {
+    /**
+     * Bad request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Execution not found
+     */
+    404: ErrorResponse;
+};
+
+export type UploadExecutionFilesError = UploadExecutionFilesErrors[keyof UploadExecutionFilesErrors];
+
+export type UploadExecutionFilesResponses = {
+    /**
+     * Files uploaded successfully
+     */
+    200: {
+        /**
+         * Success message
+         */
+        message?: string;
+        /**
+         * IDs of the uploaded files
+         */
+        file_ids?: Array<string>;
+    };
+};
+
+export type UploadExecutionFilesResponse = UploadExecutionFilesResponses[keyof UploadExecutionFilesResponses];
 
 export type HealthCheckData = {
     body?: never;
@@ -147,6 +244,44 @@ export type ExecuteAgentResponses = {
 
 export type ExecuteAgentResponse = ExecuteAgentResponses[keyof ExecuteAgentResponses];
 
+export type ExecuteAgentStructuredData = {
+    body: StructuredAgentExecutionRequest;
+    path: {
+        /**
+         * The ID of the agent
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/agent/{id}/execute';
+};
+
+export type ExecuteAgentStructuredErrors = {
+    /**
+     * Invalid request
+     */
+    400: ErrorResponse;
+    /**
+     * Agent not found
+     */
+    404: ErrorResponse;
+    /**
+     * Internal server error
+     */
+    500: ErrorResponse;
+};
+
+export type ExecuteAgentStructuredError = ExecuteAgentStructuredErrors[keyof ExecuteAgentStructuredErrors];
+
+export type ExecuteAgentStructuredResponses = {
+    /**
+     * Agent execution started successfully
+     */
+    202: ExecutionResponse;
+};
+
+export type ExecuteAgentStructuredResponse = ExecuteAgentStructuredResponses[keyof ExecuteAgentStructuredResponses];
+
 export type GetExecutionStatusData = {
     body?: never;
     path: {
@@ -215,6 +350,40 @@ export type GetExecutionResultResponses = {
 
 export type GetExecutionResultResponse = GetExecutionResultResponses[keyof GetExecutionResultResponses];
 
+export type GetBrowserSessionRecordingData = {
+    body?: never;
+    path: {
+        /**
+         * The ID of the execution
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/execution/{id}/browser_session/recording';
+};
+
+export type GetBrowserSessionRecordingErrors = {
+    /**
+     * Browser session not found
+     */
+    404: ErrorResponse;
+    /**
+     * Internal server error
+     */
+    500: ErrorResponse;
+};
+
+export type GetBrowserSessionRecordingError = GetBrowserSessionRecordingErrors[keyof GetBrowserSessionRecordingErrors];
+
+export type GetBrowserSessionRecordingResponses = {
+    /**
+     * Browser session recording retrieved successfully
+     */
+    200: BrowserSessionRecordingResponse;
+};
+
+export type GetBrowserSessionRecordingResponse = GetBrowserSessionRecordingResponses[keyof GetBrowserSessionRecordingResponses];
+
 export type ClientOptions = {
-    baseUrl: 'https://odyssey.asteroid.ai/api/v1' | (string & {});
+    baseUrl: 'https://odyssey.asteroid.ai/api/v1' | `${string}://${string}/api/v1` | (string & {});
 };
