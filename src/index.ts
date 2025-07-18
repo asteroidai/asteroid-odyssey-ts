@@ -36,7 +36,7 @@ export const AsteroidClient = (apiKey: string, options?: { baseUrl?: string }): 
  * @returns The execution ID.
  *
  * @example
- * const executionId = await executeAgentStructured(client, 'my-agent-id', {
+ * const executionId = await executeAgent(client, 'my-agent-id', {
  *   agent_profile_id: 'profile-123',
  *   dynamic_data: { input: "some dynamic value" }
  * });
