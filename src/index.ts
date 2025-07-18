@@ -3,8 +3,10 @@ import * as AgentsSDK from './generated/agents/sdk.gen';
 import type { Client } from '@hey-api/client-fetch';
 import type {
   AgentExecutionRequest,
+  StructuredAgentExecutionRequest,
   ExecutionStatusResponse,
-  ExecutionResultResponse
+  ExecutionResultResponse,
+  BrowserSessionRecordingResponse
 } from './generated/agents/types.gen';
 
 /**
@@ -26,22 +28,25 @@ export const AsteroidClient = (apiKey: string, options?: { baseUrl?: string }): 
 };
 
 /**
- * Execute an agent with the provided parameters.
+ * Execute an agent with parameters including optional agent profile ID.
  *
  * @param client - The API client.
  * @param agentId - The ID of the agent to execute.
- * @param executionData - The execution parameters.
+ * @param executionData - The structured execution parameters.
  * @returns The execution ID.
  *
  * @example
- * const executionId = await executeAgent(client, 'my-agent-id', { input: "some dynamic value" });
+ * const executionId = await executeAgentStructured(client, 'my-agent-id', {
+ *   agent_profile_id: 'profile-123',
+ *   dynamic_data: { input: "some dynamic value" }
+ * });
  */
 export const executeAgent = async (
   client: Client,
   agentId: string,
-  executionData: AgentExecutionRequest
+  executionData: StructuredAgentExecutionRequest
 ): Promise<string> => {
-  const response = await AgentsSDK.executeAgent({
+  const response = await AgentsSDK.executeAgentStructured({
     client,
     path: { id: agentId },
     body: executionData,
@@ -152,6 +157,65 @@ export const waitForExecutionResult = async (
   }
 
   throw new Error(`Execution ${executionId} timed out after ${timeout}ms`);
+};
+
+/**
+ * Get the browser session recording URL for a completed execution.
+ *
+ * @param client - The API client.
+ * @param executionId - The execution identifier.
+ * @returns The browser session recording URL.
+ *
+ * @example
+ * const recording = await getBrowserSessionRecording(client, executionId);
+ * console.log(recording.recording_url);
+ */
+export const getBrowserSessionRecording = async (
+  client: Client,
+  executionId: string
+): Promise<BrowserSessionRecordingResponse> => {
+  const response = await AgentsSDK.getBrowserSessionRecording({
+    client,
+    path: { id: executionId },
+  });
+
+  if (response.error) {
+    throw new Error((response.error as { error: string }).error);
+  }
+
+  return response.data;
+};
+
+/**
+ * Upload files to an execution.
+ *
+ * @param client - The API client.
+ * @param executionId - The execution identifier.
+ * @param files - Array of files to upload.
+ * @returns The uploaded file IDs and success message.
+ *
+ * @example
+ * const fileInput = document.getElementById('file-input') as HTMLInputElement;
+ * const files = Array.from(fileInput.files || []);
+ * const result = await uploadExecutionFiles(client, executionId, files);
+ * console.log(result.file_ids);
+ */
+export const uploadExecutionFiles = async (
+  client: Client,
+  executionId: string,
+  files: Array<Blob | File>
+): Promise<{ message?: string; file_ids?: string[] }> => {
+  const response = await AgentsSDK.uploadExecutionFiles({
+    client,
+    path: { id: executionId },
+    body: { files },
+  });
+
+  if (response.error) {
+    throw new Error((response.error as { error: string }).error);
+  }
+
+  return response.data;
 };
 
 /**
