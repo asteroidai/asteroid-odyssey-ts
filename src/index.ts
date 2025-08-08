@@ -114,7 +114,7 @@ export const getExecutionResult = async (
     throw new Error(response.data.error);
   }
 
-  return response.data.result || {};
+  return response.data.execution_result || {};
 };
 
 /**
