@@ -73,7 +73,7 @@ export type ExecutionResult = {
 /**
  * Status of the execution
  */
-export type Status = 'starting' | 'running' | 'paused' | 'completed' | 'cancelled' | 'failed' | 'awaiting_completion' | 'paused_by_agent';
+export type Status = 'starting' | 'running' | 'paused' | 'completed' | 'cancelled' | 'failed' | 'awaiting_confirmation' | 'paused_by_agent';
 
 export type ErrorResponse = {
     /**

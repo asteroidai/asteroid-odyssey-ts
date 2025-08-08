@@ -60,6 +60,7 @@ export const healthCheck = <ThrowOnError extends boolean = false>(options?: Opti
 };
 
 /**
+ * @deprecated
  * Execute an agent
  * Executes an agent with the provided parameters
  */
