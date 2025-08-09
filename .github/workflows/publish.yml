@@ -1,0 +1,105 @@
+name: Publish to NPM
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org/"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+          run_install: false
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Get git tag
+        id: get_tag
+        run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Ensure tag commit is on default branch
+        shell: bash
+        run: |
+          echo "Default branch is: ${DEFAULT_BRANCH}"
+          git fetch origin ${DEFAULT_BRANCH} --quiet
+          if git merge-base --is-ancestor "$GITHUB_SHA" origin/${DEFAULT_BRANCH}; then
+            echo "Tag commit is on ${DEFAULT_BRANCH} (ok)"
+          else
+            echo "Error: Tag ${{ steps.get_tag.outputs.TAG }} is not pointing to a commit on the ${DEFAULT_BRANCH} branch."
+            exit 1
+          fi
+
+      - name: Derive version from tag and validate
+        id: derive_version
+        shell: bash
+        run: |
+          TAG="${{ steps.get_tag.outputs.TAG }}"
+          echo "Git tag: $TAG"
+
+          # Expect tags like v1.2.3 or v1.2.3-beta.1
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.]+)?$ ]]; then
+            echo "Error: Tag '$TAG' is not a valid semver tag (expected vMAJOR.MINOR.PATCH or pre-release)."
+            exit 1
+          fi
+
+          VERSION="${TAG#v}"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Choose npm dist-tag
+        id: dist_tag
+        shell: bash
+        run: |
+          VERSION="${{ steps.derive_version.outputs.VERSION }}"
+          if [[ "$VERSION" == *-* ]]; then
+            echo "TAG=next" >> $GITHUB_OUTPUT
+            echo "Using npm dist-tag 'next' for prerelease version $VERSION"
+          else
+            echo "TAG=latest" >> $GITHUB_OUTPUT
+            echo "Using npm dist-tag 'latest' for stable version $VERSION"
+          fi
+
+      - name: Set package.json version from tag
+        run: |
+          echo "Setting package.json version to ${{ steps.derive_version.outputs.VERSION }}"
+          npm version ${{ steps.derive_version.outputs.VERSION }} --no-git-tag-version
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Publish to NPM
+        run: pnpm publish --no-git-checks --tag ${{ steps.dist_tag.outputs.TAG }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
