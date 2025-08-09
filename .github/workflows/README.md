@@ -16,42 +16,42 @@ The `publish.yml` workflow automatically publishes the TypeScript SDK to NPM whe
 
 ### Usage
 
-1. **Update version in package.json**:
+1. Merge your feature branch into the default branch (e.g. `main`).
+2. Pull the latest on your local default branch:
    ```bash
-   # Update the version field in package.json to match your intended release
-   # For example: "version": "v1.2.2"
+   git checkout $(git symbolic-ref --short refs/remotes/origin/HEAD | sed 's@^origin/@@')
+   git pull
    ```
+3. Create and push a tag that follows semver with a leading `v`:
 
-2. **Commit your changes**:
    ```bash
-   git add package.json
-   git commit -m "Bump version to v1.2.2"
-   git push
-   ```
-
-3. **Create and push a tag**:
-   ```bash
-   # Tag must match the version in package.json
+   # Stable release
    git tag v1.2.2
    git push origin v1.2.2
+
+   # Pre-release (will publish with dist-tag 'next')
+   git tag v1.3.0-beta.1
+   git push origin v1.3.0-beta.1
    ```
 
 The workflow will automatically:
+
 - Trigger when the tag is pushed
-- Verify that the git tag matches the version in package.json
+- Ensure the tag commit is on the repository's default branch
+- Derive the package.json version from the tag (no need to pre-bump in branches)
 - Install dependencies using pnpm
 - Build the TypeScript project
-- Publish to NPM using the provided token
+- Publish to NPM using the provided token and appropriate dist-tag (`latest` or `next`)
 
 ### Workflow Features
 
-- **Version Validation**: Ensures the git tag matches the package.json version
+- **Tag-Driven Versioning**: Uses the git tag to set `package.json` version during CI
 - **Caching**: Uses pnpm store caching for faster builds
 - **Node.js 20**: Uses the latest LTS version of Node.js
 - **Automated Publishing**: No manual OTP entry required
 
 ### Troubleshooting
 
-- If the workflow fails with "Package version does not match git tag", ensure your package.json version field exactly matches the git tag you're pushing
+- If the workflow fails with a tag validation error, ensure your tag matches `vMAJOR.MINOR.PATCH` (optionally with a pre-release suffix like `-beta.1`)
 - If NPM publish fails, check that your NPM_TOKEN secret is correctly set and has the necessary permissions
 - The workflow uses `pnpm publish --no-git-checks` to avoid issues with git state during CI
