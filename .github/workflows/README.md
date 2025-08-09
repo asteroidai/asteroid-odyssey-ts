@@ -24,6 +24,10 @@ The `publish.yml` workflow automatically publishes the TypeScript SDK to NPM whe
    ```
 3. Create and push a tag that follows semver with a leading `v`:
 
+   With `tagbump` simply run `tagbump`.
+
+   Or, to do it manually:
+
    ```bash
    # Stable release
    git tag v1.2.2
