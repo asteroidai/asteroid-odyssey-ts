@@ -41,7 +41,6 @@ The `publish.yml` workflow automatically publishes the TypeScript SDK to NPM whe
 The workflow will automatically:
 
 - Trigger when the tag is pushed
-- Ensure the tag commit is on the repository's default branch
 - Derive the package.json version from the tag (no need to pre-bump in branches)
 - Install dependencies using pnpm
 - Build the TypeScript project
