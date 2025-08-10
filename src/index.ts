@@ -6,7 +6,10 @@ import type {
   StructuredAgentExecutionRequest,
   ExecutionStatusResponse,
   ExecutionResultResponse,
-  BrowserSessionRecordingResponse
+  BrowserSessionRecordingResponse,
+  AgentProfile,
+  CreateAgentProfileRequest,
+  UpdateAgentProfileRequest
 } from './generated/agents/types.gen';
 
 /**
@@ -209,6 +212,148 @@ export const uploadExecutionFiles = async (
     client,
     path: { id: executionId },
     body: { files },
+  });
+
+  if (response.error) {
+    throw new Error((response.error as { error: string }).error);
+  }
+
+  return response.data;
+};
+
+/**
+ * Get agent profiles for an organization (or all organizations for the user if not specified).
+ *
+ * @param client - The API client.
+ * @param organizationId - Optional organization ID to filter by.
+ * @returns The list of agent profiles.
+ *
+ * @example
+ * const profiles = await getAgentProfiles(client, 'org_123');
+ */
+export const getAgentProfiles = async (
+  client: Client,
+  organizationId?: string
+): Promise<AgentProfile[]> => {
+  const response = await AgentsSDK.getAgentProfiles({
+    client,
+    query: organizationId ? { organization_id: organizationId } : undefined,
+  });
+
+  if (response.error) {
+    throw new Error((response.error as { error: string }).error);
+  }
+
+  return response.data;
+};
+
+/**
+ * Create a new agent profile.
+ *
+ * @param client - The API client.
+ * @param payload - The agent profile data.
+ * @returns The created agent profile.
+ *
+ * @example
+ * const profile = await createAgentProfile(client, {
+ *   name: 'My Profile',
+ *   description: 'Profile description',
+ *   organization_id: 'org_123',
+ *   proxy_cc: 'us',
+ *   proxy_type: 'residential',
+ *   captcha_solver_active: false,
+ *   sticky_ip: false,
+ *   credentials: []
+ * });
+ */
+export const createAgentProfile = async (
+  client: Client,
+  payload: CreateAgentProfileRequest
+): Promise<AgentProfile> => {
+  const response = await AgentsSDK.createAgentProfile({
+    client,
+    body: payload,
+  });
+
+  if (response.error) {
+    throw new Error((response.error as { error: string }).error);
+  }
+
+  return response.data;
+};
+
+/**
+ * Get a specific agent profile by ID.
+ *
+ * @param client - The API client.
+ * @param profileId - The agent profile ID.
+ * @returns The agent profile.
+ *
+ * @example
+ * const profile = await getAgentProfile(client, 'profile_123');
+ */
+export const getAgentProfile = async (
+  client: Client,
+  profileId: string
+): Promise<AgentProfile> => {
+  const response = await AgentsSDK.getAgentProfile({
+    client,
+    path: { profile_id: profileId },
+  });
+
+  if (response.error) {
+    throw new Error((response.error as { error: string }).error);
+  }
+
+  return response.data;
+};
+
+/**
+ * Update an existing agent profile.
+ *
+ * @param client - The API client.
+ * @param profileId - The agent profile ID.
+ * @param payload - The update data.
+ * @returns The updated agent profile.
+ *
+ * @example
+ * const updated = await updateAgentProfile(client, 'profile_123', { name: 'New Name' });
+ */
+export const updateAgentProfile = async (
+  client: Client,
+  profileId: string,
+  payload: UpdateAgentProfileRequest
+): Promise<AgentProfile> => {
+  const response = await AgentsSDK.updateAgentProfile({
+    client,
+    path: { profile_id: profileId },
+    body: payload,
+  });
+
+  if (response.error) {
+    throw new Error((response.error as { error: string }).error);
+  }
+
+  return response.data;
+};
+
+/**
+ * Delete an agent profile by ID.
+ *
+ * @param client - The API client.
+ * @param profileId - The agent profile ID.
+ * @returns A success message.
+ *
+ * @example
+ * await deleteAgentProfile(client, 'profile_123');
+ */
+export const deleteAgentProfile = async (
+  client: Client,
+  profileId: string
+): Promise<{ message?: string }> => {
+  const response = await AgentsSDK.deleteAgentProfile({
+    client,
+    path: { profile_id: profileId },
   });
 
   if (response.error) {
