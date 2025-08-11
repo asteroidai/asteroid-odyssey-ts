@@ -364,22 +364,26 @@ export const getAgentProfile = async (
  * @returns The updated agent profile.
  *
  * @example
- * const updated = await updateAgentProfile(client, 'profile_123', { name: 'New Name' });
+ * const updated = await updateAgentProfile(client, 'profile_123', { 
+ *   name: 'New Name',
+ *   credentials_to_add: [{ name: 'API_KEY', data: 'secret-key' }],
+ *   credentials_to_delete: ['cred_456']
+ * });
  */
 export const updateAgentProfile = async (
   client: Client,
   profileId: string,
   payload: UpdateAgentProfileRequest
 ): Promise<AgentProfile> => {
-  // If credentials are provided, encrypt them before sending
+  // If credentials_to_add are provided, encrypt them before sending
   let processedPayload = { ...payload };
   
-  if (payload.credentials && payload.credentials.length > 0) {
+  if (payload.credentials_to_add && payload.credentials_to_add.length > 0) {
     // Get the public key for encryption
     const publicKey = await getCredentialsPublicKey(client);
     
-    // Encrypt each credential's data field
-    processedPayload.credentials = payload.credentials.map(credential => ({
+    // Encrypt the data field of each credential to add
+    processedPayload.credentials_to_add = payload.credentials_to_add.map(credential => ({
       ...credential,
       data: encryptWithPublicKey(credential.data, publicKey)
     }));

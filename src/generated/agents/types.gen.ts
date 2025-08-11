@@ -195,9 +195,13 @@ export type UpdateAgentProfileRequest = {
      */
     sticky_ip?: boolean;
     /**
-     * Complete list of credentials (replaces existing)
+     * List of credentials to add to the profile
      */
-    credentials?: Array<Credential>;
+    credentials_to_add?: Array<Credential>;
+    /**
+     * List of credential IDs to delete from the profile
+     */
+    credentials_to_delete?: Array<string>;
 };
 
 /**
