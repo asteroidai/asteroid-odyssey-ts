@@ -715,8 +715,6 @@ export type UpdateAgentProfileResponses = {
 
 export type UpdateAgentProfileResponse = UpdateAgentProfileResponses[keyof UpdateAgentProfileResponses];
 
-<<<<<<< HEAD
-=======
 export type GetCredentialsPublicKeyData = {
     body?: never;
     path?: never;
@@ -740,7 +738,6 @@ export type GetCredentialsPublicKeyResponses = {
 
 export type GetCredentialsPublicKeyResponse = GetCredentialsPublicKeyResponses[keyof GetCredentialsPublicKeyResponses];
 
->>>>>>> 7b2a6de (feat: add support for agent profile management and encryption)
 export type ClientOptions = {
     baseUrl: 'https://odyssey.asteroid.ai/api/v1' | `${string}://${string}/api/v1` | (string & {});
 };
