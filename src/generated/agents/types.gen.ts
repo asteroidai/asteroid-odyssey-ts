@@ -73,7 +73,7 @@ export type ExecutionResult = {
 /**
  * Status of the execution
  */
-export type Status = 'starting' | 'running' | 'paused' | 'completed' | 'cancelled' | 'failed' | 'awaiting_completion' | 'paused_by_agent';
+export type Status = 'starting' | 'running' | 'paused' | 'completed' | 'cancelled' | 'failed' | 'awaiting_confirmation' | 'paused_by_agent';
 
 export type ErrorResponse = {
     /**
@@ -103,6 +103,130 @@ export type StructuredAgentExecutionRequest = {
     dynamic_data?: {
         [key: string]: unknown;
     };
+};
+
+export type AgentProfile = {
+    /**
+     * Unique identifier for the agent profile
+     */
+    id: string;
+    /**
+     * Name of the agent profile (unique within organization)
+     */
+    name: string;
+    /**
+     * Description of the agent profile
+     */
+    description: string;
+    /**
+     * The ID of the organization that the agent profile belongs to
+     */
+    organization_id: string;
+    proxy_cc: CountryCode;
+    proxy_type: ProxyType;
+    /**
+     * Whether the captcha solver is active for this profile
+     */
+    captcha_solver_active: boolean;
+    /**
+     * Whether the same IP address should be used for all executions of this profile
+     */
+    sticky_ip: boolean;
+    /**
+     * List of credentials associated with this agent profile
+     */
+    credentials: Array<Credential>;
+    /**
+     * The date and time the agent profile was created
+     */
+    created_at: string;
+    /**
+     * The last update time of the agent profile
+     */
+    updated_at: string;
+};
+
+export type CreateAgentProfileRequest = {
+    /**
+     * Name of the agent profile (must be unique within organization)
+     */
+    name: string;
+    /**
+     * Description of the agent profile
+     */
+    description: string;
+    /**
+     * The ID of the organization that the agent profile belongs to
+     */
+    organization_id: string;
+    proxy_cc: CountryCode;
+    proxy_type: ProxyType;
+    /**
+     * Whether the captcha solver should be active for this profile
+     */
+    captcha_solver_active: boolean;
+    /**
+     * Whether the same IP address should be used for all executions of this profile
+     */
+    sticky_ip: boolean;
+    /**
+     * Optional list of credentials to create with the profile
+     */
+    credentials: Array<Credential>;
+};
+
+export type UpdateAgentProfileRequest = {
+    /**
+     * The name of the agent profile
+     */
+    name?: string;
+    /**
+     * The description of the agent profile
+     */
+    description?: string;
+    proxy_cc?: CountryCode;
+    proxy_type?: ProxyType;
+    /**
+     * Whether the captcha solver should be active for this profile
+     */
+    captcha_solver_active?: boolean;
+    /**
+     * Whether the same IP address should be used for all executions of this profile
+     */
+    sticky_ip?: boolean;
+    /**
+     * Complete list of credentials (replaces existing)
+     */
+    credentials?: Array<Credential>;
+};
+
+/**
+ * Two-letter country code for proxy location
+ */
+export type CountryCode = 'us' | 'uk' | 'fr' | 'it' | 'jp' | 'au' | 'de' | 'fi' | 'ca';
+
+/**
+ * Type of proxy to use
+ */
+export type ProxyType = 'residential' | 'mobile';
+
+export type Credential = {
+    /**
+     * The unique identifier for this credential
+     */
+    id?: string;
+    /**
+     * The credential name
+     */
+    name: string;
+    /**
+     * The encrypted credential
+     */
+    data: string;
+    /**
+     * When the credential was created
+     */
+    created_at?: string;
 };
 
 export type GetOpenApiData = {
@@ -383,6 +507,213 @@ export type GetBrowserSessionRecordingResponses = {
 };
 
 export type GetBrowserSessionRecordingResponse = GetBrowserSessionRecordingResponses[keyof GetBrowserSessionRecordingResponses];
+
+export type GetAgentProfilesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * The ID of the organization to filter by
+         */
+        organization_id?: string;
+    };
+    url: '/agent-profiles';
+};
+
+export type GetAgentProfilesErrors = {
+    /**
+     * Unauthorized - Authentication required
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden - Insufficient permissions
+     */
+    403: ErrorResponse;
+    /**
+     * Internal server error
+     */
+    500: ErrorResponse;
+};
+
+export type GetAgentProfilesError = GetAgentProfilesErrors[keyof GetAgentProfilesErrors];
+
+export type GetAgentProfilesResponses = {
+    /**
+     * List of agent profiles
+     */
+    200: Array<AgentProfile>;
+};
+
+export type GetAgentProfilesResponse = GetAgentProfilesResponses[keyof GetAgentProfilesResponses];
+
+export type CreateAgentProfileData = {
+    body: CreateAgentProfileRequest;
+    path?: never;
+    query?: never;
+    url: '/agent-profiles';
+};
+
+export type CreateAgentProfileErrors = {
+    /**
+     * Bad request - Invalid input or profile name already exists
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized - Authentication required
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden - Insufficient permissions
+     */
+    403: ErrorResponse;
+    /**
+     * Internal server error
+     */
+    500: ErrorResponse;
+};
+
+export type CreateAgentProfileError = CreateAgentProfileErrors[keyof CreateAgentProfileErrors];
+
+export type CreateAgentProfileResponses = {
+    /**
+     * Agent profile created successfully
+     */
+    201: AgentProfile;
+};
+
+export type CreateAgentProfileResponse = CreateAgentProfileResponses[keyof CreateAgentProfileResponses];
+
+export type DeleteAgentProfileData = {
+    body?: never;
+    path: {
+        /**
+         * The ID of the agent profile
+         */
+        profile_id: string;
+    };
+    query?: never;
+    url: '/agent-profiles/{profile_id}';
+};
+
+export type DeleteAgentProfileErrors = {
+    /**
+     * Unauthorized - Authentication required
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden - Insufficient permissions
+     */
+    403: ErrorResponse;
+    /**
+     * Agent profile not found
+     */
+    404: ErrorResponse;
+    /**
+     * Internal server error
+     */
+    500: ErrorResponse;
+};
+
+export type DeleteAgentProfileError = DeleteAgentProfileErrors[keyof DeleteAgentProfileErrors];
+
+export type DeleteAgentProfileResponses = {
+    /**
+     * Agent profile deleted successfully
+     */
+    200: {
+        message?: string;
+    };
+};
+
+export type DeleteAgentProfileResponse = DeleteAgentProfileResponses[keyof DeleteAgentProfileResponses];
+
+export type GetAgentProfileData = {
+    body?: never;
+    path: {
+        /**
+         * The ID of the agent profile
+         */
+        profile_id: string;
+    };
+    query?: never;
+    url: '/agent-profiles/{profile_id}';
+};
+
+export type GetAgentProfileErrors = {
+    /**
+     * Unauthorized - Authentication required
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden - Insufficient permissions
+     */
+    403: ErrorResponse;
+    /**
+     * Agent profile not found
+     */
+    404: ErrorResponse;
+    /**
+     * Internal server error
+     */
+    500: ErrorResponse;
+};
+
+export type GetAgentProfileError = GetAgentProfileErrors[keyof GetAgentProfileErrors];
+
+export type GetAgentProfileResponses = {
+    /**
+     * Agent profile found
+     */
+    200: AgentProfile;
+};
+
+export type GetAgentProfileResponse = GetAgentProfileResponses[keyof GetAgentProfileResponses];
+
+export type UpdateAgentProfileData = {
+    body: UpdateAgentProfileRequest;
+    path: {
+        /**
+         * The ID of the agent profile
+         */
+        profile_id: string;
+    };
+    query?: never;
+    url: '/agent-profiles/{profile_id}';
+};
+
+export type UpdateAgentProfileErrors = {
+    /**
+     * Bad request - Invalid input
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized - Authentication required
+     */
+    401: ErrorResponse;
+    /**
+     * Forbidden - Insufficient permissions
+     */
+    403: ErrorResponse;
+    /**
+     * Agent profile not found
+     */
+    404: ErrorResponse;
+    /**
+     * Internal server error
+     */
+    500: ErrorResponse;
+};
+
+export type UpdateAgentProfileError = UpdateAgentProfileErrors[keyof UpdateAgentProfileErrors];
+
+export type UpdateAgentProfileResponses = {
+    /**
+     * Agent profile updated successfully
+     */
+    200: AgentProfile;
+};
+
+export type UpdateAgentProfileResponse = UpdateAgentProfileResponses[keyof UpdateAgentProfileResponses];
 
 export type ClientOptions = {
     baseUrl: 'https://odyssey.asteroid.ai/api/v1' | `${string}://${string}/api/v1` | (string & {});
