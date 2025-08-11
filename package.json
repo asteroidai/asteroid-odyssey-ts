@@ -10,9 +10,7 @@
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",
-    "openapi-ts": "openapi-ts",
-    "test:example": "ts-node example.ts",
-    "test:encryption": "ts-node test-encryption.ts"
+    "openapi-ts": "openapi-ts"
   },
   "keywords": [
     "asteroid",
