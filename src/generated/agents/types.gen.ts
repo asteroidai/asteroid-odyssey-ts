@@ -195,9 +195,13 @@ export type UpdateAgentProfileRequest = {
      */
     sticky_ip?: boolean;
     /**
-     * Complete list of credentials (replaces existing)
+     * List of credentials to add to the profile
      */
-    credentials?: Array<Credential>;
+    credentials_to_add?: Array<Credential>;
+    /**
+     * List of credential IDs to delete from the profile
+     */
+    credentials_to_delete?: Array<string>;
 };
 
 /**
@@ -714,6 +718,29 @@ export type UpdateAgentProfileResponses = {
 };
 
 export type UpdateAgentProfileResponse = UpdateAgentProfileResponses[keyof UpdateAgentProfileResponses];
+
+export type GetCredentialsPublicKeyData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/credentials/public_key';
+};
+
+export type GetCredentialsPublicKeyErrors = {
+    /**
+     * Public key not found
+     */
+    404: unknown;
+};
+
+export type GetCredentialsPublicKeyResponses = {
+    /**
+     * The public key for credentials
+     */
+    200: string;
+};
+
+export type GetCredentialsPublicKeyResponse = GetCredentialsPublicKeyResponses[keyof GetCredentialsPublicKeyResponses];
 
 export type ClientOptions = {
     baseUrl: 'https://odyssey.asteroid.ai/api/v1' | `${string}://${string}/api/v1` | (string & {});
