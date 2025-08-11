@@ -1,5 +1,6 @@
 import { createClient } from '@hey-api/client-fetch';
 import * as AgentsSDK from './generated/agents/sdk.gen';
+import { encryptWithPublicKey } from './utils/encryption';
 import type { Client } from '@hey-api/client-fetch';
 import type {
   AgentExecutionRequest,
@@ -23,7 +24,8 @@ import type {
  */
 export const AsteroidClient = (apiKey: string, options?: { baseUrl?: string }): Client => {
   return createClient({
-    baseUrl: options?.baseUrl || 'https://odyssey.asteroid.ai/api/v1',
+    baseUrl: options?.baseUrl || 'http://localhost:9090/api/v1',
+    // baseUrl: options?.baseUrl || 'https://odyssey.asteroid.ai/api/v1',
     headers: {
       'X-Asteroid-Agents-Api-Key': apiKey
     }
@@ -248,6 +250,38 @@ export const getAgentProfiles = async (
 };
 
 /**
+ * Get the public key for encrypting credentials.
+ *
+ * @param client - The API client.
+ * @returns The PEM-formatted public key.
+ *
+ * @example
+ * const publicKey = await getCredentialsPublicKey(client);
+ */
+export const getCredentialsPublicKey = async (
+  client: Client
+): Promise<string> => {
+  const response = await AgentsSDK.getCredentialsPublicKey({
+    client,
+  });
+
+  if (response.error) {
+    const errorMessage = typeof response.error === 'object' && 'error' in response.error
+      ? (response.error as { error: string }).error
+      : typeof response.error === 'string'
+      ? response.error
+      : JSON.stringify(response.error);
+    throw new Error(errorMessage || 'Unknown error');
+  }
+
+  if (!response.data) {
+    throw new Error('Public key not found');
+  }
+
+  return response.data;
+};
+
+/**
  * Create a new agent profile.
  *
  * @param client - The API client.
@@ -270,9 +304,23 @@ export const createAgentProfile = async (
   client: Client,
   payload: CreateAgentProfileRequest
 ): Promise<AgentProfile> => {
+  // If credentials are provided, encrypt them before sending
+  let processedPayload = { ...payload };
+  
+  if (payload.credentials && payload.credentials.length > 0) {
+    // Get the public key for encryption
+    const publicKey = await getCredentialsPublicKey(client);
+    
+    // Encrypt each credential's data field
+    processedPayload.credentials = payload.credentials.map(credential => ({
+      ...credential,
+      data: encryptWithPublicKey(credential.data, publicKey)
+    }));
+  }
+
   const response = await AgentsSDK.createAgentProfile({
     client,
-    body: payload,
+    body: processedPayload,
   });
 
   if (response.error) {
@@ -324,10 +372,24 @@ export const updateAgentProfile = async (
   profileId: string,
   payload: UpdateAgentProfileRequest
 ): Promise<AgentProfile> => {
+  // If credentials are provided, encrypt them before sending
+  let processedPayload = { ...payload };
+  
+  if (payload.credentials && payload.credentials.length > 0) {
+    // Get the public key for encryption
+    const publicKey = await getCredentialsPublicKey(client);
+    
+    // Encrypt each credential's data field
+    processedPayload.credentials = payload.credentials.map(credential => ({
+      ...credential,
+      data: encryptWithPublicKey(credential.data, publicKey)
+    }));
+  }
+
   const response = await AgentsSDK.updateAgentProfile({
     client,
     path: { profile_id: profileId },
-    body: payload,
+    body: processedPayload,
   });
 
   if (response.error) {

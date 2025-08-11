@@ -715,6 +715,32 @@ export type UpdateAgentProfileResponses = {
 
 export type UpdateAgentProfileResponse = UpdateAgentProfileResponses[keyof UpdateAgentProfileResponses];
 
+<<<<<<< HEAD
+=======
+export type GetCredentialsPublicKeyData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/credentials/public_key';
+};
+
+export type GetCredentialsPublicKeyErrors = {
+    /**
+     * Public key not found
+     */
+    404: unknown;
+};
+
+export type GetCredentialsPublicKeyResponses = {
+    /**
+     * The public key for credentials
+     */
+    200: string;
+};
+
+export type GetCredentialsPublicKeyResponse = GetCredentialsPublicKeyResponses[keyof GetCredentialsPublicKeyResponses];
+
+>>>>>>> 7b2a6de (feat: add support for agent profile management and encryption)
 export type ClientOptions = {
     baseUrl: 'https://odyssey.asteroid.ai/api/v1' | `${string}://${string}/api/v1` | (string & {});
 };
