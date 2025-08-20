@@ -24,6 +24,12 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
  */
 export const activitiesGet = <ThrowOnError extends boolean = false>(options: Options<ActivitiesGetData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).get<ActivitiesGetResponses, ActivitiesGetErrors, ThrowOnError>({
+        security: [
+            {
+                name: 'X-Asteroid-Agents-Api-Key',
+                type: 'apiKey'
+            }
+        ],
         url: '/executions/{executionId}/activities',
         ...options
     });
@@ -35,6 +41,12 @@ export const activitiesGet = <ThrowOnError extends boolean = false>(options: Opt
  */
 export const userMessagesAdd = <ThrowOnError extends boolean = false>(options: Options<UserMessagesAddData, ThrowOnError>) => {
     return (options.client ?? _heyApiClient).post<UserMessagesAddResponses, UserMessagesAddErrors, ThrowOnError>({
+        security: [
+            {
+                name: 'X-Asteroid-Agents-Api-Key',
+                type: 'apiKey'
+            }
+        ],
         url: '/executions/{executionId}/user-messages',
         ...options,
         headers: {
