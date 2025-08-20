@@ -1,18 +1,18 @@
-import { encryptWithPublicKey } from './utils/encryption';
-import * as AgentsV1SDK from './generated/agents-v1/sdk.gen';
-import * as AgentsV2SDK from './generated/agents-v2/sdk.gen';
+import { encryptWithPublicKey } from "./utils/encryption";
+import * as AgentsV1SDK from "./generated/agents-v1/sdk.gen";
+import * as AgentsV2SDK from "./generated/agents-v2/sdk.gen";
 import type {
   StructuredAgentExecutionRequest,
   ExecutionStatusResponse,
   BrowserSessionRecordingResponse,
   AgentProfile,
   CreateAgentProfileRequest,
-  UpdateAgentProfileRequest
-} from './generated/agents-v1/types.gen';
+  UpdateAgentProfileRequest,
+} from "./generated/agents-v1/types.gen";
 
-import { client as agentsV1Client } from './generated/agents-v1/client.gen';
-import { client as agentsV2Client } from './generated/agents-v2/client.gen';
-import { ExecutionActivity } from './generated/agents-v2';
+import { client as agentsV1Client } from "./generated/agents-v1/client.gen";
+import { client as agentsV2Client } from "./generated/agents-v2/client.gen";
+import { ExecutionActivity } from "./generated/agents-v2";
 
 /**
  * Create an API client with a provided API key.
@@ -23,27 +23,30 @@ import { ExecutionActivity } from './generated/agents-v2';
  * @example
  * const client = AsteroidClient('your-api-key');
  */
-export const AsteroidClient = (apiKey: string, options?: { v1?: { baseUrl?: string } , v2?: { baseUrl?: string } }) => {
+export const AsteroidClient = (
+  apiKey: string,
+  options?: { v1?: { baseUrl?: string }; v2?: { baseUrl?: string } }
+) => {
   agentsV1Client.setConfig({
     headers: {
-      'X-Asteroid-Agents-Api-Key': apiKey
-    }
+      "X-Asteroid-Agents-Api-Key": apiKey,
+    },
   });
   agentsV2Client.setConfig({
     headers: {
-      'X-Asteroid-Agents-Api-Key': apiKey
-    }
+      "X-Asteroid-Agents-Api-Key": apiKey,
+    },
   });
 
-    agentsV1Client.setConfig({
-      baseUrl: options?.v1?.baseUrl || 'https://odyssey.asteroid.ai/api/v1'
-    });
+  agentsV1Client.setConfig({
+    baseUrl: options?.v1?.baseUrl || "https://odyssey.asteroid.ai/api/v1",
+  });
 
-    agentsV2Client.setConfig({
-      baseUrl: options?.v2?.baseUrl || 'https://odyssey.asteroid.ai/agents/v2'
-    });
+  agentsV2Client.setConfig({
+    baseUrl: options?.v2?.baseUrl || "https://odyssey.asteroid.ai/agents/v2",
+  });
 
-  return {agentsV1Client, agentsV2Client};
+  return { agentsV1Client, agentsV2Client };
 };
 
 export type AsteroidClient = ReturnType<typeof AsteroidClient>;
@@ -166,16 +169,16 @@ export const waitForExecutionResult = async (
     const status = await getExecutionStatus(client, executionId);
     const currentStatus = status.status;
 
-    if (currentStatus === 'completed') {
+    if (currentStatus === "completed") {
       return await getExecutionResult(client, executionId);
-    } else if (currentStatus === 'failed' || currentStatus === 'cancelled') {
+    } else if (currentStatus === "failed" || currentStatus === "cancelled") {
       throw new Error(
-        `Execution ${executionId} ended with status: ${currentStatus}${status.reason ? ' - ' + status.reason : ''}`
+        `Execution ${executionId} ended with status: ${currentStatus}${status.reason ? " - " + status.reason : ""}`
       );
     }
 
     // Wait for the specified interval before polling again
-    await new Promise(resolve => setTimeout(resolve, interval));
+    await new Promise((resolve) => setTimeout(resolve, interval));
     steps--;
   }
 
@@ -256,7 +259,7 @@ export const getAgentProfiles = async (
   organizationId?: string
 ): Promise<AgentProfile[]> => {
   const response = await AgentsV1SDK.getAgentProfiles({
-    client: client.agentsV1Client ,
+    client: client.agentsV1Client,
     query: organizationId ? { organization_id: organizationId } : undefined,
   });
 
@@ -284,16 +287,17 @@ export const getCredentialsPublicKey = async (
   });
 
   if (response.error) {
-    const errorMessage = typeof response.error === 'object' && 'error' in response.error
-      ? (response.error as { error: string }).error
-      : typeof response.error === 'string'
-      ? response.error
-      : JSON.stringify(response.error);
-    throw new Error(errorMessage || 'Unknown error');
+    const errorMessage =
+      typeof response.error === "object" && "error" in response.error
+        ? (response.error as { error: string }).error
+        : typeof response.error === "string"
+          ? response.error
+          : JSON.stringify(response.error);
+    throw new Error(errorMessage || "Unknown error");
   }
 
   if (!response.data) {
-    throw new Error('Public key not found');
+    throw new Error("Public key not found");
   }
 
   return response.data;
@@ -330,9 +334,9 @@ export const createAgentProfile = async (
     const publicKey = await getCredentialsPublicKey(client);
 
     // Encrypt each credential's data field
-    processedPayload.credentials = payload.credentials.map(credential => ({
+    processedPayload.credentials = payload.credentials.map((credential) => ({
       ...credential,
-      data: encryptWithPublicKey(credential.data, publicKey)
+      data: encryptWithPublicKey(credential.data, publicKey),
     }));
   }
 
@@ -402,10 +406,12 @@ export const updateAgentProfile = async (
     const publicKey = await getCredentialsPublicKey(client);
 
     // Encrypt the data field of each credential to add
-    processedPayload.credentials_to_add = payload.credentials_to_add.map(credential => ({
-      ...credential,
-      data: encryptWithPublicKey(credential.data, publicKey)
-    }));
+    processedPayload.credentials_to_add = payload.credentials_to_add.map(
+      (credential) => ({
+        ...credential,
+        data: encryptWithPublicKey(credential.data, publicKey),
+      })
+    );
   }
 
   const response = await AgentsV1SDK.updateAgentProfile({
@@ -469,10 +475,11 @@ export const getLastNExecutionActivities = async (
   const response = await AgentsV2SDK.activitiesGet({
     client: client.agentsV2Client,
     path: { executionId },
-    query: { limit: n, order: 'desc' },
+    query: { limit: n, order: "desc" },
   });
 
   if (response.error) {
+    console.error(response.error);
     throw new Error((response.error as unknown as { error: string }).error);
   }
 
@@ -499,8 +506,8 @@ export const addMessageToExecution = async (
     path: { executionId },
     body: { message },
   });
-
   if (response.error) {
+    console.error(response.error);
     throw new Error((response.error as unknown as { error: string }).error);
   }
 };
@@ -508,7 +515,7 @@ export const addMessageToExecution = async (
 /**
  * Optionally, re-export all generated functions and types.
  */
-export * as AgentsV1SDK from './generated/agents-v1/sdk.gen';
-export * as AgentsV1Types from './generated/agents-v1/types.gen';
-export * as AgentsV2SDK from './generated/agents-v2/sdk.gen';
-export * as AgentsV2Types from './generated/agents-v2/types.gen';
+export * as AgentsV1SDK from "./generated/agents-v1/sdk.gen";
+export * as AgentsV1Types from "./generated/agents-v1/types.gen";
+export * as AgentsV2SDK from "./generated/agents-v2/sdk.gen";
+export * as AgentsV2Types from "./generated/agents-v2/types.gen";
