@@ -1,17 +1,18 @@
-import { createClient } from '@hey-api/client-fetch';
-import * as AgentsSDK from './generated/agents/sdk.gen';
 import { encryptWithPublicKey } from './utils/encryption';
-import type { Client } from '@hey-api/client-fetch';
+import * as AgentsV1SDK from './generated/agents-v1/sdk.gen';
+import * as AgentsV2SDK from './generated/agents-v2/sdk.gen';
 import type {
-  AgentExecutionRequest,
   StructuredAgentExecutionRequest,
   ExecutionStatusResponse,
-  ExecutionResultResponse,
   BrowserSessionRecordingResponse,
   AgentProfile,
   CreateAgentProfileRequest,
   UpdateAgentProfileRequest
-} from './generated/agents/types.gen';
+} from './generated/agents-v1/types.gen';
+
+import { client as agentsV1Client } from './generated/agents-v1/client.gen';
+import { client as agentsV2Client } from './generated/agents-v2/client.gen';
+import { ExecutionActivity } from './generated/agents-v2';
 
 /**
  * Create an API client with a provided API key.
@@ -22,14 +23,32 @@ import type {
  * @example
  * const client = AsteroidClient('your-api-key');
  */
-export const AsteroidClient = (apiKey: string, options?: { baseUrl?: string }): Client => {
-  return createClient({
-    baseUrl: options?.baseUrl || 'https://odyssey.asteroid.ai/api/v1',
+export const AsteroidClient = (apiKey: string, options?: { v1?: { baseUrl?: string } , v2?: { baseUrl?: string } }) => {
+  agentsV1Client.setConfig({
     headers: {
       'X-Asteroid-Agents-Api-Key': apiKey
     }
   });
+  agentsV2Client.setConfig({
+    headers: {
+      'X-Asteroid-Agents-Api-Key': apiKey
+    }
+  });
+
+    agentsV1Client.setConfig({
+      baseUrl: options?.v1?.baseUrl || 'https://odyssey.asteroid.ai/api/v1'
+    });
+
+    agentsV2Client.setConfig({
+      baseUrl: options?.v2?.baseUrl || 'https://odyssey.asteroid.ai/agents/v2'
+    });
+
+  return {agentsV1Client, agentsV2Client};
 };
+
+export type AsteroidClient = ReturnType<typeof AsteroidClient>;
+
+/** --- V1 --- */
 
 /**
  * Execute an agent with parameters including optional agent profile ID.
@@ -46,12 +65,12 @@ export const AsteroidClient = (apiKey: string, options?: { baseUrl?: string }): 
  * });
  */
 export const executeAgent = async (
-  client: Client,
+  client: AsteroidClient,
   agentId: string,
   executionData: StructuredAgentExecutionRequest
 ): Promise<string> => {
-  const response = await AgentsSDK.executeAgentStructured({
-    client,
+  const response = await AgentsV1SDK.executeAgentStructured({
+    client: client.agentsV1Client,
     path: { id: agentId },
     body: executionData,
   });
@@ -75,11 +94,11 @@ export const executeAgent = async (
  * console.log(status.status);
  */
 export const getExecutionStatus = async (
-  client: Client,
+  client: AsteroidClient,
   executionId: string
 ): Promise<ExecutionStatusResponse> => {
-  const response = await AgentsSDK.getExecutionStatus({
-    client,
+  const response = await AgentsV1SDK.getExecutionStatus({
+    client: client.agentsV1Client,
     path: { id: executionId },
   });
 
@@ -102,11 +121,11 @@ export const getExecutionStatus = async (
  * console.log(result);
  */
 export const getExecutionResult = async (
-  client: Client,
+  client: AsteroidClient,
   executionId: string
 ): Promise<Record<string, unknown>> => {
-  const response = await AgentsSDK.getExecutionResult({
-    client,
+  const response = await AgentsV1SDK.getExecutionResult({
+    client: client.agentsV1Client,
     path: { id: executionId },
   });
 
@@ -135,7 +154,7 @@ export const getExecutionResult = async (
  * const result = await waitForExecutionResult(client, executionId, 2000);
  */
 export const waitForExecutionResult = async (
-  client: Client,
+  client: AsteroidClient,
   executionId: string,
   interval: number = 1000,
   timeout: number = 3600000 // 1 hour
@@ -175,11 +194,11 @@ export const waitForExecutionResult = async (
  * console.log(recording.recording_url);
  */
 export const getBrowserSessionRecording = async (
-  client: Client,
+  client: AsteroidClient,
   executionId: string
 ): Promise<BrowserSessionRecordingResponse> => {
-  const response = await AgentsSDK.getBrowserSessionRecording({
-    client,
+  const response = await AgentsV1SDK.getBrowserSessionRecording({
+    client: client.agentsV1Client,
     path: { id: executionId },
   });
 
@@ -205,12 +224,12 @@ export const getBrowserSessionRecording = async (
  * console.log(result.file_ids);
  */
 export const uploadExecutionFiles = async (
-  client: Client,
+  client: AsteroidClient,
   executionId: string,
   files: Array<Blob | File>
 ): Promise<{ message?: string; file_ids?: string[] }> => {
-  const response = await AgentsSDK.uploadExecutionFiles({
-    client,
+  const response = await AgentsV1SDK.uploadExecutionFiles({
+    client: client.agentsV1Client,
     path: { id: executionId },
     body: { files },
   });
@@ -233,11 +252,11 @@ export const uploadExecutionFiles = async (
  * const profiles = await getAgentProfiles(client, 'org_123');
  */
 export const getAgentProfiles = async (
-  client: Client,
+  client: AsteroidClient,
   organizationId?: string
 ): Promise<AgentProfile[]> => {
-  const response = await AgentsSDK.getAgentProfiles({
-    client,
+  const response = await AgentsV1SDK.getAgentProfiles({
+    client: client.agentsV1Client ,
     query: organizationId ? { organization_id: organizationId } : undefined,
   });
 
@@ -258,10 +277,10 @@ export const getAgentProfiles = async (
  * const publicKey = await getCredentialsPublicKey(client);
  */
 export const getCredentialsPublicKey = async (
-  client: Client
+  client: AsteroidClient
 ): Promise<string> => {
-  const response = await AgentsSDK.getCredentialsPublicKey({
-    client,
+  const response = await AgentsV1SDK.getCredentialsPublicKey({
+    client: client.agentsV1Client,
   });
 
   if (response.error) {
@@ -300,16 +319,16 @@ export const getCredentialsPublicKey = async (
  * });
  */
 export const createAgentProfile = async (
-  client: Client,
+  client: AsteroidClient,
   payload: CreateAgentProfileRequest
 ): Promise<AgentProfile> => {
   // If credentials are provided, encrypt them before sending
   let processedPayload = { ...payload };
-  
+
   if (payload.credentials && payload.credentials.length > 0) {
     // Get the public key for encryption
     const publicKey = await getCredentialsPublicKey(client);
-    
+
     // Encrypt each credential's data field
     processedPayload.credentials = payload.credentials.map(credential => ({
       ...credential,
@@ -317,8 +336,8 @@ export const createAgentProfile = async (
     }));
   }
 
-  const response = await AgentsSDK.createAgentProfile({
-    client,
+  const response = await AgentsV1SDK.createAgentProfile({
+    client: client.agentsV1Client,
     body: processedPayload,
   });
 
@@ -340,11 +359,11 @@ export const createAgentProfile = async (
  * const profile = await getAgentProfile(client, 'profile_123');
  */
 export const getAgentProfile = async (
-  client: Client,
+  client: AsteroidClient,
   profileId: string
 ): Promise<AgentProfile> => {
-  const response = await AgentsSDK.getAgentProfile({
-    client,
+  const response = await AgentsV1SDK.getAgentProfile({
+    client: client.agentsV1Client,
     path: { profile_id: profileId },
   });
 
@@ -364,24 +383,24 @@ export const getAgentProfile = async (
  * @returns The updated agent profile.
  *
  * @example
- * const updated = await updateAgentProfile(client, 'profile_123', { 
+ * const updated = await updateAgentProfile(client, 'profile_123', {
  *   name: 'New Name',
  *   credentials_to_add: [{ name: 'API_KEY', data: 'secret-key' }],
  *   credentials_to_delete: ['cred_456']
  * });
  */
 export const updateAgentProfile = async (
-  client: Client,
+  client: AsteroidClient,
   profileId: string,
   payload: UpdateAgentProfileRequest
 ): Promise<AgentProfile> => {
   // If credentials_to_add are provided, encrypt them before sending
   let processedPayload = { ...payload };
-  
+
   if (payload.credentials_to_add && payload.credentials_to_add.length > 0) {
     // Get the public key for encryption
     const publicKey = await getCredentialsPublicKey(client);
-    
+
     // Encrypt the data field of each credential to add
     processedPayload.credentials_to_add = payload.credentials_to_add.map(credential => ({
       ...credential,
@@ -389,8 +408,8 @@ export const updateAgentProfile = async (
     }));
   }
 
-  const response = await AgentsSDK.updateAgentProfile({
-    client,
+  const response = await AgentsV1SDK.updateAgentProfile({
+    client: client.agentsV1Client,
     path: { profile_id: profileId },
     body: processedPayload,
   });
@@ -413,11 +432,11 @@ export const updateAgentProfile = async (
  * await deleteAgentProfile(client, 'profile_123');
  */
 export const deleteAgentProfile = async (
-  client: Client,
+  client: AsteroidClient,
   profileId: string
 ): Promise<{ message?: string }> => {
-  const response = await AgentsSDK.deleteAgentProfile({
-    client,
+  const response = await AgentsV1SDK.deleteAgentProfile({
+    client: client.agentsV1Client,
     path: { profile_id: profileId },
   });
 
@@ -428,8 +447,68 @@ export const deleteAgentProfile = async (
   return response.data;
 };
 
+/** --- V2 --- */
+
+/**
+ * Get the last N execution activities for a given execution ID, sorted by their timestamp in descending order.
+ *
+ * @param client - The API client.
+ * @param executionId - The execution identifier.
+ * @param n - The number of activities to return.
+ * @returns The list of execution activities.
+ *
+ * @example
+ * const activities = await getLastNExecutionActivities(client, 'execution_123', 10);
+ * console.log(activities);
+ */
+export const getLastNExecutionActivities = async (
+  client: AsteroidClient,
+  executionId: string,
+  n: number
+): Promise<ExecutionActivity[]> => {
+  const response = await AgentsV2SDK.activitiesGet({
+    client: client.agentsV2Client,
+    path: { executionId },
+    query: { limit: n, order: 'desc' },
+  });
+
+  if (response.error) {
+    throw new Error((response.error as unknown as { error: string }).error);
+  }
+
+  return response.data;
+};
+
+/**
+ * Add a message to an execution.
+ *
+ * @param client - The API client.
+ * @param executionId - The execution identifier.
+ * @param message - The message to add.
+ *
+ * @example
+ * await addMessageToExecution(client, 'execution_123', 'Hello, world!');
+ */
+export const addMessageToExecution = async (
+  client: AsteroidClient,
+  executionId: string,
+  message: string
+) => {
+  const response = await AgentsV2SDK.userMessagesAdd({
+    client: client.agentsV2Client,
+    path: { executionId },
+    body: { message },
+  });
+
+  if (response.error) {
+    throw new Error((response.error as unknown as { error: string }).error);
+  }
+};
+
 /**
  * Optionally, re-export all generated functions and types.
  */
-export * from './generated/agents/sdk.gen';
-export * from './generated/agents/types.gen';
+export * as AgentsV1SDK from './generated/agents-v1/sdk.gen';
+export * as AgentsV1Types from './generated/agents-v1/types.gen';
+export * as AgentsV2SDK from './generated/agents-v2/sdk.gen';
+export * as AgentsV2Types from './generated/agents-v2/types.gen';
