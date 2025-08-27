@@ -249,7 +249,7 @@ export const uploadExecutionFiles = async (
  *
  * @param client - The API client.
  * @param organizationId - Optional organization ID to filter by.
- * @returns The list of agent profiles.
+ * @returns []AgentProfile - List of agent profiles.
  *
  * @example
  * const profiles = await getAgentProfiles(client, 'org_123');
@@ -320,6 +320,7 @@ export const getCredentialsPublicKey = async (
  *   captcha_solver_active: false,
  *   sticky_ip: false,
  *   credentials: []
+ *   cookies: []
  * });
  */
 export const createAgentProfile = async (
