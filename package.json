@@ -2,7 +2,7 @@
   "name": "asteroid-odyssey",
   "version": "0.0.0",
   "description": "SDK for interacting with Asteroid Agents API",
-  "main": "dist/index.cjs",
+  "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "files": [
@@ -26,7 +26,7 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
+      "require": "./dist/index.js"
     }
   },
   "devDependencies": {
