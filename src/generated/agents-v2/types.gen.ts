@@ -102,6 +102,10 @@ export type ExecutionActivityPayloadUnion = ({
 
 export type ExecutionActivityStatusChangedPayload = {
     status: ExecutionStatus;
+    completedPayload?: ExecutionCompletedPayload;
+    failedPayload?: ExecutionFailedPayload;
+    pausedPayload?: ExecutionPausedPayload;
+    awaitingConfirmationPayload?: ExecutionAwaitingConfirmationPayload;
 };
 
 export type ExecutionActivityStepCompletedPayload = {
@@ -120,6 +124,25 @@ export type ExecutionActivityTransitionedNodePayload = {
 export type ExecutionActivityUserMessageReceivedPayload = {
     message: string;
     userUUID: Uuid;
+};
+
+export type ExecutionAwaitingConfirmationPayload = {
+    reason: string;
+};
+
+export type ExecutionCompletedPayload = {
+    outcome: 'success' | 'failure';
+    reasoning: string;
+    final_answer?: string;
+    result: unknown;
+};
+
+export type ExecutionFailedPayload = {
+    reason: string;
+};
+
+export type ExecutionPausedPayload = {
+    reason: string;
 };
 
 export type ExecutionStatus = 'starting' | 'running' | 'paused' | 'awaiting_confirmation' | 'completed' | 'cancelled' | 'failed' | 'paused_by_agent';

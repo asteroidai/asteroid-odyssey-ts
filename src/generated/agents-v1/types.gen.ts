@@ -105,6 +105,49 @@ export type StructuredAgentExecutionRequest = {
     };
 };
 
+export type Cookie = {
+    /**
+     * Unique identifier for the cookie
+     */
+    id?: string;
+    /**
+     * Display name for the cookie
+     */
+    name: string;
+    /**
+     * The cookie name/key
+     */
+    key: string;
+    /**
+     * The cookie value
+     */
+    value: string;
+    /**
+     * When the cookie expires (optional)
+     */
+    expiry?: string;
+    /**
+     * The domain for which the cookie is valid
+     */
+    domain: string;
+    /**
+     * Whether the cookie should only be sent over HTTPS
+     */
+    secure: boolean;
+    /**
+     * SameSite attribute for the cookie
+     */
+    same_site: 'Strict' | 'Lax' | 'None';
+    /**
+     * Whether the cookie should be accessible only via HTTP(S)
+     */
+    http_only: boolean;
+    /**
+     * When the cookie was created
+     */
+    created_at: string;
+};
+
 export type AgentProfile = {
     /**
      * Unique identifier for the agent profile
@@ -136,6 +179,10 @@ export type AgentProfile = {
      * List of credentials associated with this agent profile
      */
     credentials: Array<Credential>;
+    /**
+     * List of cookies associated with this agent profile
+     */
+    cookies: Array<Cookie>;
     /**
      * The date and time the agent profile was created
      */
@@ -173,6 +220,10 @@ export type CreateAgentProfileRequest = {
      * Optional list of credentials to create with the profile
      */
     credentials: Array<Credential>;
+    /**
+     * Optional list of cookies to create with the profile
+     */
+    cookies: Array<Cookie>;
 };
 
 export type UpdateAgentProfileRequest = {
@@ -202,6 +253,14 @@ export type UpdateAgentProfileRequest = {
      * List of credential IDs to delete from the profile
      */
     credentials_to_delete?: Array<string>;
+    /**
+     * List of cookies to add to the profile
+     */
+    cookies_to_add?: Array<Cookie>;
+    /**
+     * List of cookie IDs to delete from the profile
+     */
+    cookies_to_delete?: Array<string>;
 };
 
 /**
