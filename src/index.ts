@@ -12,7 +12,7 @@ import type {
 
 import { client as agentsV1Client } from "./generated/agents-v1/client.gen";
 import { client as agentsV2Client } from "./generated/agents-v2/client.gen";
-import { ExecutionActivity } from "./generated/agents-v2";
+import { ExecutionActivity, File as AsteroidFile } from "./generated/agents-v2";
 
 /**
  * Create an API client with a provided API key.
@@ -43,7 +43,7 @@ export const AsteroidClient = (
   });
 
   agentsV2Client.setConfig({
-    baseUrl: options?.v2?.baseUrl || "https://odyssey.asteroid.ai/agents/v2",
+    baseUrl: options?.v2?.baseUrl || "http://localhost:9090/agents/v2",
   });
 
   return { agentsV1Client, agentsV2Client };
@@ -79,10 +79,14 @@ export const executeAgent = async (
   });
 
   if (response.error) {
-    throw new Error((response.error as { error: string }).error);
+    throw new Error((response.error as unknown as { error: string }).error);
   }
 
-  return response.data.execution_id;
+  if (!response.data) {
+    throw new Error('No response data received');
+  }
+
+  return (response.data as any).execution_id;
 };
 
 /**
@@ -106,10 +110,14 @@ export const getExecutionStatus = async (
   });
 
   if (response.error) {
-    throw new Error((response.error as { error: string }).error);
+    throw new Error((response.error as unknown as { error: string }).error);
   }
 
-  return response.data;
+  if (!response.data) {
+    throw new Error('No response data received');
+  }
+
+  return response.data as unknown as ExecutionStatusResponse;
 };
 
 /**
@@ -133,14 +141,19 @@ export const getExecutionResult = async (
   });
 
   if (response.error) {
-    throw new Error((response.error as { error: string }).error);
+    throw new Error((response.error as unknown as { error: string }).error);
   }
 
-  if (response.data.error) {
-    throw new Error(response.data.error);
+  if (!response.data) {
+    throw new Error('No response data received');
   }
 
-  return response.data.execution_result || {};
+  const data = response.data as any;
+  if (data.error) {
+    throw new Error(data.error);
+  }
+
+  return data.execution_result || {};
 };
 
 /**
@@ -206,10 +219,14 @@ export const getBrowserSessionRecording = async (
   });
 
   if (response.error) {
-    throw new Error((response.error as { error: string }).error);
+    throw new Error((response.error as unknown as { error: string }).error);
   }
 
-  return response.data;
+  if (!response.data) {
+    throw new Error('No response data received');
+  }
+
+  return response.data as unknown as BrowserSessionRecordingResponse;
 };
 
 /**
@@ -229,7 +246,7 @@ export const getBrowserSessionRecording = async (
 export const uploadExecutionFiles = async (
   client: AsteroidClient,
   executionId: string,
-  files: Array<Blob | File>
+  files: Array<Blob | globalThis.File>
 ): Promise<{ message?: string; file_ids?: string[] }> => {
   const response = await AgentsV1SDK.uploadExecutionFiles({
     client: client.agentsV1Client,
@@ -238,10 +255,14 @@ export const uploadExecutionFiles = async (
   });
 
   if (response.error) {
-    throw new Error((response.error as { error: string }).error);
+    throw new Error((response.error as unknown as { error: string }).error);
   }
 
-  return response.data;
+  if (!response.data) {
+    throw new Error('No response data received');
+  }
+
+  return response.data as { message?: string; file_ids?: string[] };
 };
 
 /**
@@ -264,10 +285,14 @@ export const getAgentProfiles = async (
   });
 
   if (response.error) {
-    throw new Error((response.error as { error: string }).error);
+    throw new Error((response.error as unknown as { error: string }).error);
   }
 
-  return response.data;
+  if (!response.data) {
+    throw new Error('No response data received');
+  }
+
+  return response.data as AgentProfile[];
 };
 
 /**
@@ -347,10 +372,14 @@ export const createAgentProfile = async (
   });
 
   if (response.error) {
-    throw new Error((response.error as { error: string }).error);
+    throw new Error((response.error as unknown as { error: string }).error);
   }
 
-  return response.data;
+  if (!response.data) {
+    throw new Error('No response data received');
+  }
+
+  return response.data as unknown as AgentProfile;
 };
 
 /**
@@ -373,10 +402,14 @@ export const getAgentProfile = async (
   });
 
   if (response.error) {
-    throw new Error((response.error as { error: string }).error);
+    throw new Error((response.error as unknown as { error: string }).error);
   }
 
-  return response.data;
+  if (!response.data) {
+    throw new Error('No response data received');
+  }
+
+  return response.data as unknown as AgentProfile;
 };
 
 /**
@@ -422,10 +455,14 @@ export const updateAgentProfile = async (
   });
 
   if (response.error) {
-    throw new Error((response.error as { error: string }).error);
+    throw new Error((response.error as unknown as { error: string }).error);
   }
 
-  return response.data;
+  if (!response.data) {
+    throw new Error('No response data received');
+  }
+
+  return response.data as unknown as AgentProfile;
 };
 
 /**
@@ -448,10 +485,14 @@ export const deleteAgentProfile = async (
   });
 
   if (response.error) {
-    throw new Error((response.error as { error: string }).error);
+    throw new Error((response.error as unknown as { error: string }).error);
   }
 
-  return response.data;
+  if (!response.data) {
+    throw new Error('No response data received');
+  }
+
+  return response.data as { message?: string };
 };
 
 /** --- V2 --- */
@@ -484,7 +525,11 @@ export const getLastNExecutionActivities = async (
     throw new Error((response.error as unknown as { error: string }).error);
   }
 
-  return response.data;
+  if (!response.data) {
+    throw new Error('No response data received');
+  }
+
+  return response.data as ExecutionActivity[];
 };
 
 /**
@@ -510,6 +555,132 @@ export const addMessageToExecution = async (
   if (response.error) {
     console.error(response.error);
     throw new Error((response.error as unknown as { error: string }).error);
+  }
+};
+
+/**
+ * Get a list of files associated with an execution.
+ *
+ * @param client - The API client.
+ * @param executionId - The execution identifier.
+ * @returns A list of files associated with the execution.
+ *
+ * @example
+ * const files = await getExecutionFiles(client, 'execution_123');
+ * files.forEach(file => {
+ *   console.log(`File: ${file.fileName}, Size: ${file.fileSize}`);
+ * });
+ */
+export const getExecutionFiles = async (
+  client: AsteroidClient,
+  executionId: string
+): Promise<AsteroidFile[]> => {
+  const response = await AgentsV2SDK.contextFilesGet({
+    client: client.agentsV2Client,
+    path: { executionId },
+  });
+
+  if (response.error) {
+    console.error(response.error);
+    throw new Error((response.error as unknown as { error: string }).error);
+  }
+
+  if (!response.data) {
+    throw new Error('No response data received');
+  }
+
+  return response.data as AsteroidFile[];
+};
+
+/**
+ * Download a file from an execution using its signed URL.
+ *
+ * @param client - The API client.
+ * @param file - The File object containing the signed URL and metadata.
+ * @param downloadPath - Path where the file should be saved. Can be a directory or full file path.
+ * @param createDirs - Whether to create parent directories if they don't exist (default: true).
+ * @param timeout - Request timeout in seconds (default: 30).
+ * @returns The full path where the file was saved.
+ *
+ * @example
+ * const files = await getExecutionFiles(client, 'execution_123');
+ * for (const file of files) {
+ *   // Download to specific directory
+ *   const savedPath = await downloadExecutionFile(client, file, './downloads/');
+ *   console.log(`Downloaded ${file.fileName} to ${savedPath}`);
+ *
+ *   // Download with specific filename
+ *   const savedPath2 = await downloadExecutionFile(client, file, './downloads/my_file.txt');
+ *   console.log(`Downloaded to ${savedPath2}`);
+ * }
+ */
+export const downloadExecutionFile = async (
+  client: AsteroidClient,
+  file: AsteroidFile,
+  downloadPath: string,
+  createDirs: boolean = true,
+  timeout: number = 30
+): Promise<string> => {
+  const fs = await import('fs');
+  const path = await import('path');
+
+  let finalPath: string;
+
+  // Determine the final file path
+  if (fs.existsSync(downloadPath) && fs.lstatSync(downloadPath).isDirectory() || downloadPath.endsWith('/')) {
+    // If downloadPath is a directory, use the original filename
+    finalPath = path.join(downloadPath, file.fileName);
+  } else {
+    // If downloadPath includes a filename, use it as-is
+    finalPath = downloadPath;
+  }
+
+  // Create parent directories if needed
+  const parentDir = path.dirname(finalPath);
+  if (createDirs && !fs.existsSync(parentDir)) {
+    fs.mkdirSync(parentDir, { recursive: true });
+  } else if (!createDirs && !fs.existsSync(parentDir)) {
+    throw new Error(`Parent directory does not exist: ${parentDir}`);
+  }
+
+  try {
+    // Download the file using the signed URL
+    const response = await fetch(file.signedUrl, {
+      signal: AbortSignal.timeout(timeout * 1000)
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    // Verify content length if available
+    const contentLength = response.headers.get('content-length');
+    if (contentLength && parseInt(contentLength) !== file.fileSize) {
+      throw new Error(
+        `Content length mismatch: expected ${file.fileSize}, got ${contentLength}`
+      );
+    }
+
+    // Get the response as an array buffer
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Final verification of the downloaded file size
+    if (buffer.length !== file.fileSize) {
+      throw new Error(
+        `Downloaded file size mismatch: expected ${file.fileSize}, got ${buffer.length}`
+      );
+    }
+
+    // Write the file
+    fs.writeFileSync(finalPath, buffer);
+
+    return finalPath;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to download file: ${error.message}`);
+    }
+    throw new Error('Failed to download file: Unknown error');
   }
 };
 

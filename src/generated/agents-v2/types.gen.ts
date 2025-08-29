@@ -56,9 +56,9 @@ export type _Error = {
 };
 
 export type ExecutionActivity = {
+    executionId: Uuid;
     id: Uuid;
     payload: ExecutionActivityPayloadUnion;
-    executionId: Uuid;
     timestamp: string;
 };
 
@@ -79,33 +79,33 @@ export type ExecutionActivityGenericPayload = {
 };
 
 export type ExecutionActivityPayloadUnion = ({
-    activityType: 'terminal';
+    activityType?: 'terminal';
 } & ActivityPayloadUnionTerminal) | ({
-    activityType: 'generic';
+    activityType?: 'generic';
 } & ActivityPayloadUnionGeneric) | ({
-    activityType: 'step_started';
+    activityType?: 'step_started';
 } & ActivityPayloadUnionStepStarted) | ({
-    activityType: 'step_completed';
+    activityType?: 'step_completed';
 } & ActivityPayloadUnionStepCompleted) | ({
-    activityType: 'transitioned_node';
+    activityType?: 'transitioned_node';
 } & ActivityPayloadUnionTransitionedNode) | ({
-    activityType: 'status_changed';
+    activityType?: 'status_changed';
 } & ActivityPayloadUnionStatusChanged) | ({
-    activityType: 'action_started';
+    activityType?: 'action_started';
 } & ActivityPayloadUnionActionStarted) | ({
-    activityType: 'action_completed';
+    activityType?: 'action_completed';
 } & ActivityPayloadUnionActionCompleted) | ({
-    activityType: 'action_failed';
+    activityType?: 'action_failed';
 } & ActivityPayloadUnionActionFailed) | ({
-    activityType: 'user_message_received';
+    activityType?: 'user_message_received';
 } & ActivityPayloadUnionUserMessageReceived);
 
 export type ExecutionActivityStatusChangedPayload = {
-    status: ExecutionStatus;
+    awaitingConfirmationPayload?: ExecutionAwaitingConfirmationPayload;
     completedPayload?: ExecutionCompletedPayload;
     failedPayload?: ExecutionFailedPayload;
     pausedPayload?: ExecutionPausedPayload;
-    awaitingConfirmationPayload?: ExecutionAwaitingConfirmationPayload;
+    status: ExecutionStatus;
 };
 
 export type ExecutionActivityStepCompletedPayload = {
@@ -117,8 +117,8 @@ export type ExecutionActivityStepStartedPayload = {
 };
 
 export type ExecutionActivityTransitionedNodePayload = {
-    newNodeUUID: Uuid;
     newNodeName: string;
+    newNodeUUID: Uuid;
 };
 
 export type ExecutionActivityUserMessageReceivedPayload = {
@@ -131,9 +131,9 @@ export type ExecutionAwaitingConfirmationPayload = {
 };
 
 export type ExecutionCompletedPayload = {
+    final_answer?: string;
     outcome: 'success' | 'failure';
     reasoning: string;
-    final_answer?: string;
     result: unknown;
 };
 
@@ -148,12 +148,26 @@ export type ExecutionPausedPayload = {
 export type ExecutionStatus = 'starting' | 'running' | 'paused' | 'awaiting_confirmation' | 'completed' | 'cancelled' | 'failed' | 'paused_by_agent';
 
 export type ExecutionTerminalPayload = {
-    reason: 'unsubscribe' | 'complete' | 'error';
     message?: string;
+    reason: 'unsubscribe' | 'complete' | 'error';
 };
 
 export type ExecutionUserMessagesAddTextBody = {
     message: string;
+};
+
+export type File = {
+    agentId: Uuid;
+    createdAt: string;
+    executionId: Uuid;
+    fileExt: string;
+    fileName: string;
+    filePath: string;
+    fileSize: number;
+    fileType: string;
+    id: Uuid;
+    mimeType: string;
+    signedUrl: string;
 };
 
 export type FilePart = Blob | File;
@@ -200,6 +214,33 @@ export type ActivitiesGetResponses = {
 };
 
 export type ActivitiesGetResponse = ActivitiesGetResponses[keyof ActivitiesGetResponses];
+
+export type ContextFilesGetData = {
+    body?: never;
+    path: {
+        executionId: Uuid;
+    };
+    query?: never;
+    url: '/executions/{executionId}/context-files';
+};
+
+export type ContextFilesGetErrors = {
+    /**
+     * The server cannot find the requested resource.
+     */
+    404: 'Execution files not found.';
+};
+
+export type ContextFilesGetError = ContextFilesGetErrors[keyof ContextFilesGetErrors];
+
+export type ContextFilesGetResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: Array<File>;
+};
+
+export type ContextFilesGetResponse = ContextFilesGetResponses[keyof ContextFilesGetResponses];
 
 export type UserMessagesAddData = {
     /**
