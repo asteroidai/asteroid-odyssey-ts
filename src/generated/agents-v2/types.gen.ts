@@ -56,9 +56,9 @@ export type _Error = {
 };
 
 export type ExecutionActivity = {
-    executionId: Uuid;
     id: Uuid;
     payload: ExecutionActivityPayloadUnion;
+    executionId: Uuid;
     timestamp: string;
 };
 
@@ -79,33 +79,34 @@ export type ExecutionActivityGenericPayload = {
 };
 
 export type ExecutionActivityPayloadUnion = ({
-    activityType?: 'terminal';
+    activityType: 'terminal';
 } & ActivityPayloadUnionTerminal) | ({
-    activityType?: 'generic';
+    activityType: 'generic';
 } & ActivityPayloadUnionGeneric) | ({
-    activityType?: 'step_started';
+    activityType: 'step_started';
 } & ActivityPayloadUnionStepStarted) | ({
-    activityType?: 'step_completed';
+    activityType: 'step_completed';
 } & ActivityPayloadUnionStepCompleted) | ({
-    activityType?: 'transitioned_node';
+    activityType: 'transitioned_node';
 } & ActivityPayloadUnionTransitionedNode) | ({
-    activityType?: 'status_changed';
+    activityType: 'status_changed';
 } & ActivityPayloadUnionStatusChanged) | ({
-    activityType?: 'action_started';
+    activityType: 'action_started';
 } & ActivityPayloadUnionActionStarted) | ({
-    activityType?: 'action_completed';
+    activityType: 'action_completed';
 } & ActivityPayloadUnionActionCompleted) | ({
-    activityType?: 'action_failed';
+    activityType: 'action_failed';
 } & ActivityPayloadUnionActionFailed) | ({
-    activityType?: 'user_message_received';
+    activityType: 'user_message_received';
 } & ActivityPayloadUnionUserMessageReceived);
 
 export type ExecutionActivityStatusChangedPayload = {
-    awaitingConfirmationPayload?: ExecutionAwaitingConfirmationPayload;
+    status: ExecutionStatus;
     completedPayload?: ExecutionCompletedPayload;
     failedPayload?: ExecutionFailedPayload;
     pausedPayload?: ExecutionPausedPayload;
-    status: ExecutionStatus;
+    awaitingConfirmationPayload?: ExecutionAwaitingConfirmationPayload;
+    cancelledPayload?: ExecutionCancelledPayload;
 };
 
 export type ExecutionActivityStepCompletedPayload = {
@@ -117,8 +118,8 @@ export type ExecutionActivityStepStartedPayload = {
 };
 
 export type ExecutionActivityTransitionedNodePayload = {
-    newNodeName: string;
     newNodeUUID: Uuid;
+    newNodeName: string;
 };
 
 export type ExecutionActivityUserMessageReceivedPayload = {
@@ -130,10 +131,16 @@ export type ExecutionAwaitingConfirmationPayload = {
     reason: string;
 };
 
+export type ExecutionCancelReason = 'timeout' | 'max_steps' | 'user_requested';
+
+export type ExecutionCancelledPayload = {
+    reason: ExecutionCancelReason;
+};
+
 export type ExecutionCompletedPayload = {
-    final_answer?: string;
     outcome: 'success' | 'failure';
     reasoning: string;
+    final_answer?: string;
     result: unknown;
 };
 
@@ -148,8 +155,8 @@ export type ExecutionPausedPayload = {
 export type ExecutionStatus = 'starting' | 'running' | 'paused' | 'awaiting_confirmation' | 'completed' | 'cancelled' | 'failed' | 'paused_by_agent';
 
 export type ExecutionTerminalPayload = {
-    message?: string;
     reason: 'unsubscribe' | 'complete' | 'error';
+    message?: string;
 };
 
 export type ExecutionUserMessagesAddTextBody = {
@@ -157,16 +164,16 @@ export type ExecutionUserMessagesAddTextBody = {
 };
 
 export type File = {
-    agentId: Uuid;
-    createdAt: string;
+    id: Uuid;
     executionId: Uuid;
-    fileExt: string;
-    fileName: string;
+    agentId: Uuid;
     filePath: string;
+    fileName: string;
+    fileExt: string;
     fileSize: number;
     fileType: string;
-    id: Uuid;
     mimeType: string;
+    createdAt: string;
     signedUrl: string;
 };
 
