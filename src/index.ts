@@ -74,7 +74,7 @@ const handleSdkCall = async <TData>(
     if (error instanceof Error) {
       // If it's already a properly formatted error from handleApiResponse, re-throw it
       if (error.message.includes('No response data received') || 
-          (!error.message.startsWith('Failed to'))) {
+          (error.message.startsWith('Failed to'))) {
         throw error;
       }
       throw new Error(`Failed to ${errorContext}: ${error.message}`);
@@ -206,7 +206,7 @@ export const getExecutionResult = async (
     throw new Error(data.error);
   }
 
-  return data.execution_result?.result || {};
+  return data.execution_result || {};
 };
 
 /**
