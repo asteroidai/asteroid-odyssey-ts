@@ -78,7 +78,7 @@ export const AsteroidClient = (
   });
 
   agentsV2Client.setConfig({
-    baseUrl: options?.v2?.baseUrl || "http://localhost:9090/agents/v2",
+    baseUrl: options?.v2?.baseUrl || "https://odyssey.asteroid.ai/agents/v2",
   });
 
   return { agentsV1Client, agentsV2Client };
