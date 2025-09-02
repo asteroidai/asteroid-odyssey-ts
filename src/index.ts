@@ -15,6 +15,41 @@ import { client as agentsV2Client } from "./generated/agents-v2/client.gen";
 import { ExecutionActivity, File as AsteroidFile } from "./generated/agents-v2";
 
 /**
+ * Centralized error handling utility for API responses.
+ * Handles common error patterns and data validation.
+ * 
+ * @param response - The API response object
+ * @param customDataMessage - Custom message for missing data (optional)
+ * @returns The response data if valid
+ * @throws Error with appropriate message if response contains errors or missing data
+ */
+const handleApiResponse = <T>(
+  response: { data?: T; error?: unknown },
+  customDataMessage?: string
+): T => {
+  if (response.error) {
+    // Handle different error formats
+    let errorMessage: string;
+    
+    if (typeof response.error === "object" && response.error !== null && "error" in response.error) {
+      errorMessage = (response.error as { error: string }).error;
+    } else if (typeof response.error === "string") {
+      errorMessage = response.error;
+    } else {
+      errorMessage = JSON.stringify(response.error);
+    }
+    
+    throw new Error(errorMessage || "Unknown error");
+  }
+
+  if (!response.data) {
+    throw new Error(customDataMessage || 'No response data received');
+  }
+
+  return response.data;
+};
+
+/**
  * Create an API client with a provided API key.
  *
  * @param apiKey - Your API key.
@@ -78,15 +113,8 @@ export const executeAgent = async (
     body: executionData,
   });
 
-  if (response.error) {
-    throw new Error((response.error as unknown as { error: string }).error);
-  }
-
-  if (!response.data) {
-    throw new Error('No response data received');
-  }
-
-  return (response.data as any).execution_id;
+  const data = handleApiResponse(response);
+  return (data as any).execution_id;
 };
 
 /**
@@ -109,15 +137,8 @@ export const getExecutionStatus = async (
     path: { id: executionId },
   });
 
-  if (response.error) {
-    throw new Error((response.error as unknown as { error: string }).error);
-  }
-
-  if (!response.data) {
-    throw new Error('No response data received');
-  }
-
-  return response.data as unknown as ExecutionStatusResponse;
+  const data = handleApiResponse(response);
+  return data as unknown as ExecutionStatusResponse;
 };
 
 /**
@@ -140,15 +161,9 @@ export const getExecutionResult = async (
     path: { id: executionId },
   });
 
-  if (response.error) {
-    throw new Error((response.error as unknown as { error: string }).error);
-  }
-
-  if (!response.data) {
-    throw new Error('No response data received');
-  }
-
-  const data = response.data as any;
+  const data = handleApiResponse(response) as any;
+  
+  // Handle additional error check specific to execution results
   if (data.error) {
     throw new Error(data.error);
   }
@@ -218,15 +233,8 @@ export const getBrowserSessionRecording = async (
     path: { id: executionId },
   });
 
-  if (response.error) {
-    throw new Error((response.error as unknown as { error: string }).error);
-  }
-
-  if (!response.data) {
-    throw new Error('No response data received');
-  }
-
-  return response.data as unknown as BrowserSessionRecordingResponse;
+  const data = handleApiResponse(response);
+  return data as unknown as BrowserSessionRecordingResponse;
 };
 
 /**
@@ -254,15 +262,8 @@ export const uploadExecutionFiles = async (
     body: { files },
   });
 
-  if (response.error) {
-    throw new Error((response.error as unknown as { error: string }).error);
-  }
-
-  if (!response.data) {
-    throw new Error('No response data received');
-  }
-
-  return response.data as { message?: string; file_ids?: string[] };
+  const data = handleApiResponse(response);
+  return data as { message?: string; file_ids?: string[] };
 };
 
 /**
@@ -284,15 +285,8 @@ export const getAgentProfiles = async (
     query: organizationId ? { organization_id: organizationId } : undefined,
   });
 
-  if (response.error) {
-    throw new Error((response.error as unknown as { error: string }).error);
-  }
-
-  if (!response.data) {
-    throw new Error('No response data received');
-  }
-
-  return response.data as AgentProfile[];
+  const data = handleApiResponse(response);
+  return data as AgentProfile[];
 };
 
 /**
@@ -311,21 +305,8 @@ export const getCredentialsPublicKey = async (
     client: client.agentsV1Client,
   });
 
-  if (response.error) {
-    const errorMessage =
-      typeof response.error === "object" && "error" in response.error
-        ? (response.error as { error: string }).error
-        : typeof response.error === "string"
-          ? response.error
-          : JSON.stringify(response.error);
-    throw new Error(errorMessage || "Unknown error");
-  }
-
-  if (!response.data) {
-    throw new Error("Public key not found");
-  }
-
-  return response.data;
+  const data = handleApiResponse(response, "Public key not found");
+  return data;
 };
 
 /**
@@ -371,15 +352,8 @@ export const createAgentProfile = async (
     body: processedPayload,
   });
 
-  if (response.error) {
-    throw new Error((response.error as unknown as { error: string }).error);
-  }
-
-  if (!response.data) {
-    throw new Error('No response data received');
-  }
-
-  return response.data as unknown as AgentProfile;
+  const data = handleApiResponse(response);
+  return data as unknown as AgentProfile;
 };
 
 /**
@@ -401,15 +375,8 @@ export const getAgentProfile = async (
     path: { profile_id: profileId },
   });
 
-  if (response.error) {
-    throw new Error((response.error as unknown as { error: string }).error);
-  }
-
-  if (!response.data) {
-    throw new Error('No response data received');
-  }
-
-  return response.data as unknown as AgentProfile;
+  const data = handleApiResponse(response);
+  return data as unknown as AgentProfile;
 };
 
 /**
@@ -454,15 +421,8 @@ export const updateAgentProfile = async (
     body: processedPayload,
   });
 
-  if (response.error) {
-    throw new Error((response.error as unknown as { error: string }).error);
-  }
-
-  if (!response.data) {
-    throw new Error('No response data received');
-  }
-
-  return response.data as unknown as AgentProfile;
+  const data = handleApiResponse(response);
+  return data as unknown as AgentProfile;
 };
 
 /**
@@ -484,15 +444,8 @@ export const deleteAgentProfile = async (
     path: { profile_id: profileId },
   });
 
-  if (response.error) {
-    throw new Error((response.error as unknown as { error: string }).error);
-  }
-
-  if (!response.data) {
-    throw new Error('No response data received');
-  }
-
-  return response.data as { message?: string };
+  const data = handleApiResponse(response);
+  return data as { message?: string };
 };
 
 /** --- V2 --- */
@@ -522,14 +475,10 @@ export const getLastNExecutionActivities = async (
 
   if (response.error) {
     console.error(response.error);
-    throw new Error((response.error as unknown as { error: string }).error);
   }
 
-  if (!response.data) {
-    throw new Error('No response data received');
-  }
-
-  return response.data as ExecutionActivity[];
+  const data = handleApiResponse(response);
+  return data as ExecutionActivity[];
 };
 
 /**
@@ -552,9 +501,10 @@ export const addMessageToExecution = async (
     path: { executionId },
     body: { message },
   });
+  
   if (response.error) {
     console.error(response.error);
-    throw new Error((response.error as unknown as { error: string }).error);
+    handleApiResponse(response);
   }
 };
 
@@ -582,14 +532,10 @@ export const getExecutionFiles = async (
 
   if (response.error) {
     console.error(response.error);
-    throw new Error((response.error as unknown as { error: string }).error);
   }
 
-  if (!response.data) {
-    throw new Error('No response data received');
-  }
-
-  return response.data as AsteroidFile[];
+  const data = handleApiResponse(response);
+  return data as AsteroidFile[];
 };
 
 /**
