@@ -1,3 +1,6 @@
+import fs from "fs";
+import path from "path";
+
 import { encryptWithPublicKey } from "./utils/encryption";
 import * as AgentsV1SDK from "./generated/agents-v1/sdk.gen";
 import * as AgentsV2SDK from "./generated/agents-v2/sdk.gen";
@@ -9,10 +12,76 @@ import type {
   CreateAgentProfileRequest,
   UpdateAgentProfileRequest,
 } from "./generated/agents-v1/types.gen";
-
 import { client as agentsV1Client } from "./generated/agents-v1/client.gen";
 import { client as agentsV2Client } from "./generated/agents-v2/client.gen";
-import { ExecutionActivity } from "./generated/agents-v2";
+import { ExecutionActivity, File as AsteroidFile } from "./generated/agents-v2";
+
+/**
+ * Centralized error handling utility for API responses.
+ * Handles common error patterns and data validation.
+ * 
+ * @param response - The API response object from the generated SDK
+ * @param customDataMessage - Custom message for missing data (optional)
+ * @returns The response data if valid
+ * @throws Error with appropriate message if response contains errors or missing data
+ */
+const handleApiResponse = <TData>(
+  response: { data?: TData; error?: unknown },
+  customDataMessage?: string
+): TData => {
+  if (response.error) {
+    // Handle different error formats
+    let errorMessage: string;
+    
+    if (typeof response.error === "object" && response.error !== null && "error" in response.error) {
+      errorMessage = (response.error as { error: string }).error;
+    } else if (typeof response.error === "string") {
+      errorMessage = response.error;
+    } else {
+      errorMessage = JSON.stringify(response.error);
+    }
+    
+    throw new Error(errorMessage || "Unknown error");
+  }
+
+  if (response.data === undefined) {
+    throw new Error(customDataMessage || 'No response data received');
+  }
+
+  return response.data;
+};
+
+/**
+ * Generic wrapper for SDK calls that handles both API response errors and network/client errors.
+ * This function wraps SDK calls to provide comprehensive error handling.
+ * 
+ * @param sdkCall - The SDK function call that returns a promise with { data?, error? }
+ * @param errorContext - Context for error messages (e.g., "get execution files")
+ * @param customDataMessage - Custom message for missing data (optional)
+ * @returns The response data if valid
+ * @throws Error with appropriate message for any type of error
+ */
+const handleSdkCall = async <TData>(
+  sdkCall: () => Promise<{ data?: TData; error?: unknown }>,
+  errorContext: string,
+  customDataMessage?: string
+): Promise<TData> => {
+  try {
+    const response = await sdkCall();
+    return handleApiResponse(response, customDataMessage);
+  } catch (error) {
+    // Handle network errors, client config errors, or if throwOnError is enabled
+    if (error instanceof Error) {
+      // If it's already a properly formatted error from handleApiResponse, re-throw it
+      if (error.message.includes('No response data received') || 
+          (error.message.startsWith('Failed to'))) {
+        throw error;
+      }
+      throw new Error(`Failed to ${errorContext}: ${error.message}`);
+    }
+    throw new Error(`Failed to ${errorContext}: Unknown error`);
+  }
+};
 
 /**
  * Create an API client with a provided API key.
@@ -72,17 +141,17 @@ export const executeAgent = async (
   agentId: string,
   executionData: StructuredAgentExecutionRequest
 ): Promise<string> => {
-  const response = await AgentsV1SDK.executeAgentStructured({
-    client: client.agentsV1Client,
-    path: { id: agentId },
-    body: executionData,
-  });
-
-  if (response.error) {
-    throw new Error((response.error as { error: string }).error);
-  }
-
-  return response.data.execution_id;
+  const data = await handleSdkCall(
+    () => AgentsV1SDK.executeAgentStructured({
+      client: client.agentsV1Client,
+      path: { id: agentId },
+      body: executionData,
+    }),
+    "execute agent"
+  );
+  
+  // ExecutionResponse has execution_id: string
+  return data.execution_id;
 };
 
 /**
@@ -100,16 +169,13 @@ export const getExecutionStatus = async (
   client: AsteroidClient,
   executionId: string
 ): Promise<ExecutionStatusResponse> => {
-  const response = await AgentsV1SDK.getExecutionStatus({
-    client: client.agentsV1Client,
-    path: { id: executionId },
-  });
-
-  if (response.error) {
-    throw new Error((response.error as { error: string }).error);
-  }
-
-  return response.data;
+  return handleSdkCall(
+    () => AgentsV1SDK.getExecutionStatus({
+      client: client.agentsV1Client,
+      path: { id: executionId },
+    }),
+    "get execution status"
+  );
 };
 
 /**
@@ -127,20 +193,20 @@ export const getExecutionResult = async (
   client: AsteroidClient,
   executionId: string
 ): Promise<Record<string, unknown>> => {
-  const response = await AgentsV1SDK.getExecutionResult({
-    client: client.agentsV1Client,
-    path: { id: executionId },
-  });
-
-  if (response.error) {
-    throw new Error((response.error as { error: string }).error);
+  const data = await handleSdkCall(
+    () => AgentsV1SDK.getExecutionResult({
+      client: client.agentsV1Client,
+      path: { id: executionId },
+    }),
+    "get execution result"
+  );
+  
+  // Handle additional error check specific to execution results
+  if (data.error) {
+    throw new Error(data.error);
   }
 
-  if (response.data.error) {
-    throw new Error(response.data.error);
-  }
-
-  return response.data.execution_result || {};
+  return data.execution_result || {};
 };
 
 /**
@@ -200,16 +266,13 @@ export const getBrowserSessionRecording = async (
   client: AsteroidClient,
   executionId: string
 ): Promise<BrowserSessionRecordingResponse> => {
-  const response = await AgentsV1SDK.getBrowserSessionRecording({
-    client: client.agentsV1Client,
-    path: { id: executionId },
-  });
-
-  if (response.error) {
-    throw new Error((response.error as { error: string }).error);
-  }
-
-  return response.data;
+  return handleSdkCall(
+    () => AgentsV1SDK.getBrowserSessionRecording({
+      client: client.agentsV1Client,
+      path: { id: executionId },
+    }),
+    "get browser session recording"
+  );
 };
 
 /**
@@ -229,19 +292,16 @@ export const getBrowserSessionRecording = async (
 export const uploadExecutionFiles = async (
   client: AsteroidClient,
   executionId: string,
-  files: Array<Blob | File>
+  files: Array<Blob | globalThis.File>
 ): Promise<{ message?: string; file_ids?: string[] }> => {
-  const response = await AgentsV1SDK.uploadExecutionFiles({
-    client: client.agentsV1Client,
-    path: { id: executionId },
-    body: { files },
-  });
-
-  if (response.error) {
-    throw new Error((response.error as { error: string }).error);
-  }
-
-  return response.data;
+  return handleSdkCall(
+    () => AgentsV1SDK.uploadExecutionFiles({
+      client: client.agentsV1Client,
+      path: { id: executionId },
+      body: { files },
+    }),
+    "upload execution files"
+  );
 };
 
 /**
@@ -258,16 +318,13 @@ export const getAgentProfiles = async (
   client: AsteroidClient,
   organizationId?: string
 ): Promise<AgentProfile[]> => {
-  const response = await AgentsV1SDK.getAgentProfiles({
-    client: client.agentsV1Client,
-    query: organizationId ? { organization_id: organizationId } : undefined,
-  });
-
-  if (response.error) {
-    throw new Error((response.error as { error: string }).error);
-  }
-
-  return response.data;
+  return handleSdkCall(
+    () => AgentsV1SDK.getAgentProfiles({
+      client: client.agentsV1Client,
+      query: organizationId ? { organization_id: organizationId } : undefined,
+    }),
+    "get agent profiles"
+  );
 };
 
 /**
@@ -282,25 +339,13 @@ export const getAgentProfiles = async (
 export const getCredentialsPublicKey = async (
   client: AsteroidClient
 ): Promise<string> => {
-  const response = await AgentsV1SDK.getCredentialsPublicKey({
-    client: client.agentsV1Client,
-  });
-
-  if (response.error) {
-    const errorMessage =
-      typeof response.error === "object" && "error" in response.error
-        ? (response.error as { error: string }).error
-        : typeof response.error === "string"
-          ? response.error
-          : JSON.stringify(response.error);
-    throw new Error(errorMessage || "Unknown error");
-  }
-
-  if (!response.data) {
-    throw new Error("Public key not found");
-  }
-
-  return response.data;
+  return handleSdkCall(
+    () => AgentsV1SDK.getCredentialsPublicKey({
+      client: client.agentsV1Client,
+    }),
+    "get credentials public key",
+    "Public key not found"
+  );
 };
 
 /**
@@ -341,16 +386,13 @@ export const createAgentProfile = async (
     }));
   }
 
-  const response = await AgentsV1SDK.createAgentProfile({
-    client: client.agentsV1Client,
-    body: processedPayload,
-  });
-
-  if (response.error) {
-    throw new Error((response.error as { error: string }).error);
-  }
-
-  return response.data;
+  return handleSdkCall(
+    () => AgentsV1SDK.createAgentProfile({
+      client: client.agentsV1Client,
+      body: processedPayload,
+    }),
+    "create agent profile"
+  );
 };
 
 /**
@@ -367,16 +409,13 @@ export const getAgentProfile = async (
   client: AsteroidClient,
   profileId: string
 ): Promise<AgentProfile> => {
-  const response = await AgentsV1SDK.getAgentProfile({
-    client: client.agentsV1Client,
-    path: { profile_id: profileId },
-  });
-
-  if (response.error) {
-    throw new Error((response.error as { error: string }).error);
-  }
-
-  return response.data;
+  return handleSdkCall(
+    () => AgentsV1SDK.getAgentProfile({
+      client: client.agentsV1Client,
+      path: { profile_id: profileId },
+    }),
+    "get agent profile"
+  );
 };
 
 /**
@@ -415,17 +454,14 @@ export const updateAgentProfile = async (
     );
   }
 
-  const response = await AgentsV1SDK.updateAgentProfile({
-    client: client.agentsV1Client,
-    path: { profile_id: profileId },
-    body: processedPayload,
-  });
-
-  if (response.error) {
-    throw new Error((response.error as { error: string }).error);
-  }
-
-  return response.data;
+  return handleSdkCall(
+    () => AgentsV1SDK.updateAgentProfile({
+      client: client.agentsV1Client,
+      path: { profile_id: profileId },
+      body: processedPayload,
+    }),
+    "update agent profile"
+  );
 };
 
 /**
@@ -442,16 +478,13 @@ export const deleteAgentProfile = async (
   client: AsteroidClient,
   profileId: string
 ): Promise<{ message?: string }> => {
-  const response = await AgentsV1SDK.deleteAgentProfile({
-    client: client.agentsV1Client,
-    path: { profile_id: profileId },
-  });
-
-  if (response.error) {
-    throw new Error((response.error as { error: string }).error);
-  }
-
-  return response.data;
+  return handleSdkCall(
+    () => AgentsV1SDK.deleteAgentProfile({
+      client: client.agentsV1Client,
+      path: { profile_id: profileId },
+    }),
+    "delete agent profile"
+  );
 };
 
 /** --- V2 --- */
@@ -473,18 +506,14 @@ export const getLastNExecutionActivities = async (
   executionId: string,
   n: number
 ): Promise<ExecutionActivity[]> => {
-  const response = await AgentsV2SDK.activitiesGet({
-    client: client.agentsV2Client,
-    path: { executionId },
-    query: { limit: n, order: "desc" },
-  });
-
-  if (response.error) {
-    console.error(response.error);
-    throw new Error((response.error as unknown as { error: string }).error);
-  }
-
-  return response.data;
+  return handleSdkCall(
+    () => AgentsV2SDK.activitiesGet({
+      client: client.agentsV2Client,
+      path: { executionId },
+      query: { limit: n, order: "desc" },
+    }),
+    "get execution activities"
+  );
 };
 
 /**
@@ -502,14 +531,128 @@ export const addMessageToExecution = async (
   executionId: string,
   message: string
 ) => {
-  const response = await AgentsV2SDK.userMessagesAdd({
-    client: client.agentsV2Client,
-    path: { executionId },
-    body: { message },
-  });
-  if (response.error) {
-    console.error(response.error);
-    throw new Error((response.error as unknown as { error: string }).error);
+  await handleSdkCall(
+    () => AgentsV2SDK.userMessagesAdd({
+      client: client.agentsV2Client,
+      path: { executionId },
+      body: { message },
+    }),
+    "add message to execution"
+  );
+};
+
+/**
+ * Get a list of files associated with an execution.
+ *
+ * @param client - The API client.
+ * @param executionId - The execution identifier.
+ * @returns A list of files associated with the execution.
+ *
+ * @example
+ * const files = await getExecutionFiles(client, 'execution_123');
+ * files.forEach(file => {
+ *   console.log(`File: ${file.fileName}, Size: ${file.fileSize}`);
+ * });
+ */
+export const getExecutionFiles = async (
+  client: AsteroidClient,
+  executionId: string
+): Promise<AsteroidFile[]> => {
+  return handleSdkCall(
+    () => AgentsV2SDK.contextFilesGet({
+      client: client.agentsV2Client,
+      path: { executionId },
+    }),
+    "get execution files"
+  );
+};
+
+/**
+ * Download a file from an execution using its signed URL.
+ *
+ * @param client - The API client.
+ * @param file - The File object containing the signed URL and metadata.
+ * @param downloadPath - Path where the file should be saved. Can be a directory or full file path.
+ * @param createDirs - Whether to create parent directories if they don't exist (default: true).
+ * @param timeout - Request timeout in seconds (default: 30).
+ * @returns The full path where the file was saved.
+ *
+ * @example
+ * const files = await getExecutionFiles(client, 'execution_123');
+ * for (const file of files) {
+ *   // Download to specific directory
+ *   const savedPath = await downloadExecutionFile(client, file, './downloads/');
+ *   console.log(`Downloaded ${file.fileName} to ${savedPath}`);
+ *
+ *   // Download with specific filename
+ *   const savedPath2 = await downloadExecutionFile(client, file, './downloads/my_file.txt');
+ *   console.log(`Downloaded to ${savedPath2}`);
+ * }
+ */
+export const downloadExecutionFile = async (
+  client: AsteroidClient,
+  file: AsteroidFile,
+  downloadPath: string,
+  createDirs: boolean = true,
+  timeout: number = 30
+): Promise<string> => {
+  let finalPath: string;
+
+  // Determine the final file path
+  if (fs.existsSync(downloadPath) && fs.lstatSync(downloadPath).isDirectory() || downloadPath.endsWith('/')) {
+    // If downloadPath is a directory, use the original filename
+    finalPath = path.join(downloadPath, file.fileName);
+  } else {
+    // If downloadPath includes a filename, use it as-is
+    finalPath = downloadPath;
+  }
+
+  // Create parent directories if needed
+  const parentDir = path.dirname(finalPath);
+  if (createDirs && !fs.existsSync(parentDir)) {
+    fs.mkdirSync(parentDir, { recursive: true });
+  } else if (!createDirs && !fs.existsSync(parentDir)) {
+    throw new Error(`Parent directory does not exist: ${parentDir}`);
+  }
+
+  try {
+    // Download the file using the signed URL
+    const response = await fetch(file.signedUrl, {
+      signal: AbortSignal.timeout(timeout * 1000)
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    // Verify content length if available
+    const contentLength = response.headers.get('content-length');
+    if (contentLength && parseInt(contentLength) !== file.fileSize) {
+      throw new Error(
+        `Content length mismatch: expected ${file.fileSize}, got ${contentLength}`
+      );
+    }
+
+    // Get the response as an array buffer
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Final verification of the downloaded file size
+    if (buffer.length !== file.fileSize) {
+      throw new Error(
+        `Downloaded file size mismatch: expected ${file.fileSize}, got ${buffer.length}`
+      );
+    }
+
+    // Write the file
+    fs.writeFileSync(finalPath, buffer);
+
+    return finalPath;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to download file: ${error.message}`);
+    }
+    throw new Error('Failed to download file: Unknown error');
   }
 };
 

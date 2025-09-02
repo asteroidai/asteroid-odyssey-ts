@@ -106,6 +106,7 @@ export type ExecutionActivityStatusChangedPayload = {
     failedPayload?: ExecutionFailedPayload;
     pausedPayload?: ExecutionPausedPayload;
     awaitingConfirmationPayload?: ExecutionAwaitingConfirmationPayload;
+    cancelledPayload?: ExecutionCancelledPayload;
 };
 
 export type ExecutionActivityStepCompletedPayload = {
@@ -128,6 +129,12 @@ export type ExecutionActivityUserMessageReceivedPayload = {
 
 export type ExecutionAwaitingConfirmationPayload = {
     reason: string;
+};
+
+export type ExecutionCancelReason = 'timeout' | 'max_steps' | 'user_requested';
+
+export type ExecutionCancelledPayload = {
+    reason: ExecutionCancelReason;
 };
 
 export type ExecutionCompletedPayload = {
@@ -154,6 +161,20 @@ export type ExecutionTerminalPayload = {
 
 export type ExecutionUserMessagesAddTextBody = {
     message: string;
+};
+
+export type File = {
+    id: Uuid;
+    executionId: Uuid;
+    agentId: Uuid;
+    filePath: string;
+    fileName: string;
+    fileExt: string;
+    fileSize: number;
+    fileType: string;
+    mimeType: string;
+    createdAt: string;
+    signedUrl: string;
 };
 
 export type FilePart = Blob | File;
@@ -200,6 +221,33 @@ export type ActivitiesGetResponses = {
 };
 
 export type ActivitiesGetResponse = ActivitiesGetResponses[keyof ActivitiesGetResponses];
+
+export type ContextFilesGetData = {
+    body?: never;
+    path: {
+        executionId: Uuid;
+    };
+    query?: never;
+    url: '/executions/{executionId}/context-files';
+};
+
+export type ContextFilesGetErrors = {
+    /**
+     * The server cannot find the requested resource.
+     */
+    404: 'Execution files not found.';
+};
+
+export type ContextFilesGetError = ContextFilesGetErrors[keyof ContextFilesGetErrors];
+
+export type ContextFilesGetResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: Array<File>;
+};
+
+export type ContextFilesGetResponse = ContextFilesGetResponses[keyof ContextFilesGetResponses];
 
 export type UserMessagesAddData = {
     /**
