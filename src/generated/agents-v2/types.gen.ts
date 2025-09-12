@@ -2,83 +2,111 @@
 
 export type ActivityPayloadUnionActionCompleted = {
     activityType: 'action_completed';
-    data: ExecutionActivityActionCompletedPayload;
+    data: AgentsExecutionActivityActionCompletedPayload;
 };
 
 export type ActivityPayloadUnionActionFailed = {
     activityType: 'action_failed';
-    data: ExecutionActivityActionFailedPayload;
+    data: AgentsExecutionActivityActionFailedPayload;
 };
 
 export type ActivityPayloadUnionActionStarted = {
     activityType: 'action_started';
-    data: ExecutionActivityActionStartedPayload;
+    data: AgentsExecutionActivityActionStartedPayload;
+};
+
+export type ActivityPayloadUnionFileAdded = {
+    activityType: 'file_added';
+    data: AgentsExecutionActivityFileAddedPayload;
 };
 
 export type ActivityPayloadUnionGeneric = {
     activityType: 'generic';
-    data: ExecutionActivityGenericPayload;
+    data: AgentsExecutionActivityGenericPayload;
+};
+
+export type ActivityPayloadUnionGraphUpdated = {
+    activityType: 'graph_updated';
+    data: AgentsExecutionActivityGraphUpdatedPayload;
 };
 
 export type ActivityPayloadUnionStatusChanged = {
     activityType: 'status_changed';
-    data: ExecutionActivityStatusChangedPayload;
+    data: AgentsExecutionActivityStatusChangedPayload;
 };
 
 export type ActivityPayloadUnionStepCompleted = {
     activityType: 'step_completed';
-    data: ExecutionActivityStepCompletedPayload;
+    data: AgentsExecutionActivityStepCompletedPayload;
 };
 
 export type ActivityPayloadUnionStepStarted = {
     activityType: 'step_started';
-    data: ExecutionActivityStepStartedPayload;
+    data: AgentsExecutionActivityStepStartedPayload;
 };
 
 export type ActivityPayloadUnionTerminal = {
     activityType: 'terminal';
-    data: ExecutionTerminalPayload;
+    data: AgentsExecutionTerminalPayload;
 };
 
 export type ActivityPayloadUnionTransitionedNode = {
     activityType: 'transitioned_node';
-    data: ExecutionActivityTransitionedNodePayload;
+    data: AgentsExecutionActivityTransitionedNodePayload;
 };
 
 export type ActivityPayloadUnionUserMessageReceived = {
     activityType: 'user_message_received';
-    data: ExecutionActivityUserMessageReceivedPayload;
+    data: AgentsExecutionActivityUserMessageReceivedPayload;
 };
 
-export type _Error = {
-    code: number;
-    message: string;
+export type AgentsAgentBase = {
+    id: CommonUuid;
+    name: string;
+    createdAt: string;
+    organizationId?: CommonUuid;
+    userId: CommonUuid;
 };
 
-export type ExecutionActivity = {
-    id: Uuid;
-    payload: ExecutionActivityPayloadUnion;
-    executionId: Uuid;
+export type AgentsAgentSortField = 'name' | 'created_at';
+
+export type AgentsExecutionActivity = {
+    id: CommonUuid;
+    payload: AgentsExecutionActivityPayloadUnion;
+    executionId: CommonUuid;
     timestamp: string;
 };
 
-export type ExecutionActivityActionCompletedPayload = {
+export type AgentsExecutionActivityActionCompletedPayload = {
     message: string;
 };
 
-export type ExecutionActivityActionFailedPayload = {
+export type AgentsExecutionActivityActionFailedPayload = {
     message: string;
 };
 
-export type ExecutionActivityActionStartedPayload = {
+export type AgentsExecutionActivityActionStartedPayload = {
     message: string;
 };
 
-export type ExecutionActivityGenericPayload = {
+export type AgentsExecutionActivityFileAddedPayload = {
+    fileId: CommonUuid;
+    fileName: string;
+    mimeType: string;
+    fileSize: number;
+    source: 'upload' | 'download';
+    presignedUrl: string;
+};
+
+export type AgentsExecutionActivityGenericPayload = {
     message: string;
 };
 
-export type ExecutionActivityPayloadUnion = ({
+export type AgentsExecutionActivityGraphUpdatedPayload = {
+    graphUpdate: Array<AgentsExecutionGraphUpdate>;
+};
+
+export type AgentsExecutionActivityPayloadUnion = ({
     activityType: 'terminal';
 } & ActivityPayloadUnionTerminal) | ({
     activityType: 'generic';
@@ -98,75 +126,98 @@ export type ExecutionActivityPayloadUnion = ({
     activityType: 'action_failed';
 } & ActivityPayloadUnionActionFailed) | ({
     activityType: 'user_message_received';
-} & ActivityPayloadUnionUserMessageReceived);
+} & ActivityPayloadUnionUserMessageReceived) | ({
+    activityType: 'file_added';
+} & ActivityPayloadUnionFileAdded) | ({
+    activityType: 'graph_updated';
+} & ActivityPayloadUnionGraphUpdated);
 
-export type ExecutionActivityStatusChangedPayload = {
-    status: ExecutionStatus;
-    completedPayload?: ExecutionCompletedPayload;
-    failedPayload?: ExecutionFailedPayload;
-    pausedPayload?: ExecutionPausedPayload;
-    awaitingConfirmationPayload?: ExecutionAwaitingConfirmationPayload;
-    cancelledPayload?: ExecutionCancelledPayload;
+export type AgentsExecutionActivityStatusChangedPayload = {
+    status: AgentsExecutionStatus;
+    completedPayload?: AgentsExecutionCompletedPayload;
+    failedPayload?: AgentsExecutionFailedPayload;
+    pausedPayload?: AgentsExecutionPausedPayload;
+    awaitingConfirmationPayload?: AgentsExecutionAwaitingConfirmationPayload;
+    cancelledPayload?: AgentsExecutionCancelledPayload;
 };
 
-export type ExecutionActivityStepCompletedPayload = {
+export type AgentsExecutionActivityStepCompletedPayload = {
     stepNumber: number;
 };
 
-export type ExecutionActivityStepStartedPayload = {
+export type AgentsExecutionActivityStepStartedPayload = {
     stepNumber: number;
 };
 
-export type ExecutionActivityTransitionedNodePayload = {
-    newNodeUUID: Uuid;
+export type AgentsExecutionActivityTransitionedNodePayload = {
+    newNodeUUID: CommonUuid;
     newNodeName: string;
 };
 
-export type ExecutionActivityUserMessageReceivedPayload = {
+export type AgentsExecutionActivityUserMessageReceivedPayload = {
     message: string;
-    userUUID: Uuid;
+    userUUID: CommonUuid;
 };
 
-export type ExecutionAwaitingConfirmationPayload = {
+export type AgentsExecutionAwaitingConfirmationPayload = {
     reason: string;
 };
 
-export type ExecutionCancelReason = 'timeout' | 'max_steps' | 'user_requested';
+export type AgentsExecutionCancelReason = 'timeout' | 'max_steps' | 'user_requested';
 
-export type ExecutionCancelledPayload = {
-    reason: ExecutionCancelReason;
+export type AgentsExecutionCancelledPayload = {
+    reason: AgentsExecutionCancelReason;
 };
 
-export type ExecutionCompletedPayload = {
+export type AgentsExecutionCompletedPayload = {
     outcome: 'success' | 'failure';
     reasoning: string;
     final_answer?: string;
     result: unknown;
 };
 
-export type ExecutionFailedPayload = {
+export type AgentsExecutionFailedPayload = {
     reason: string;
 };
 
-export type ExecutionPausedPayload = {
+export type AgentsExecutionGraphUpdate = {
+    updateType: AgentsExecutionUpdateType;
+    nodeDetails?: AgentsExecutionNodeDetails;
+    transitionDetails?: AgentsExecutionTransitionDetails;
+};
+
+export type AgentsExecutionNodeDetails = {
+    nodeID: CommonUuid;
+    nodeName: string;
+    nodeType: string;
+};
+
+export type AgentsExecutionPausedPayload = {
     reason: string;
 };
 
-export type ExecutionStatus = 'starting' | 'running' | 'paused' | 'awaiting_confirmation' | 'completed' | 'cancelled' | 'failed' | 'paused_by_agent';
+export type AgentsExecutionStatus = 'starting' | 'running' | 'paused' | 'awaiting_confirmation' | 'completed' | 'cancelled' | 'failed' | 'paused_by_agent';
 
-export type ExecutionTerminalPayload = {
+export type AgentsExecutionTerminalPayload = {
     reason: 'unsubscribe' | 'complete' | 'error';
     message?: string;
 };
 
-export type ExecutionUserMessagesAddTextBody = {
+export type AgentsExecutionTransitionDetails = {
+    transitionID: CommonUuid;
+    transitionType: string;
+};
+
+export type AgentsExecutionUpdateType = 'add' | 'edit' | 'delete';
+
+export type AgentsExecutionUserMessagesAddTextBody = {
     message: string;
 };
 
-export type File = {
-    id: Uuid;
-    executionId: Uuid;
-    agentId: Uuid;
+export type AgentsFilesFile = {
+    id: CommonUuid;
+    executionId: CommonUuid;
+    agentId: CommonUuid;
     filePath: string;
     fileName: string;
     fileExt: string;
@@ -177,19 +228,84 @@ export type File = {
     signedUrl: string;
 };
 
-export type FilePart = Blob | File;
+export type AgentsFilesFilePart = Blob | File;
 
-export type Versions = 'frontend' | 'v2';
+export type CommonBadRequestErrorBody = {
+    code: 400;
+    message: string;
+};
 
-export type Uuid = string;
+export type CommonError = {
+    code: number;
+    message: string;
+};
 
-export type ActivitiesGetData = {
+export type CommonForbiddenErrorBody = {
+    code: 403;
+    message: string;
+};
+
+export type CommonNotFoundErrorBody = {
+    code: 404;
+    message: string;
+};
+
+export type CommonSortDirection = 'asc' | 'desc';
+
+export type CommonUuid = string;
+
+export type Version = 'v1';
+
+export type AgentsAgentSearch = string;
+
+export type CommonPaginationPage = number;
+
+export type CommonPaginationPageSize = number;
+
+export type AgentListData = {
+    body?: never;
+    path?: never;
+    query: {
+        organizationId?: CommonUuid;
+        pageSize: number;
+        page: number;
+        searchName?: string;
+        sort_field?: AgentsAgentSortField;
+        sort_direction?: CommonSortDirection;
+    };
+    url: '/agents';
+};
+
+export type AgentListErrors = {
+    /**
+     * An unexpected error response.
+     */
+    default: CommonError;
+};
+
+export type AgentListError = AgentListErrors[keyof AgentListErrors];
+
+export type AgentListResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: {
+        items: Array<AgentsAgentBase>;
+        page: number;
+        pageSize: number;
+        total: number;
+    };
+};
+
+export type AgentListResponse = AgentListResponses[keyof AgentListResponses];
+
+export type ExecutionActivitiesGetData = {
     body?: never;
     path: {
         /**
          * The unique identifier of the execution
          */
-        executionId: Uuid;
+        executionId: CommonUuid;
     };
     query?: {
         /**
@@ -204,84 +320,133 @@ export type ActivitiesGetData = {
     url: '/executions/{executionId}/activities';
 };
 
-export type ActivitiesGetErrors = {
+export type ExecutionActivitiesGetErrors = {
     /**
-     * An unexpected error response.
+     * The server could not understand the request due to invalid syntax.
      */
-    default: _Error;
+    400: CommonBadRequestErrorBody;
+    /**
+     * Access is forbidden.
+     */
+    403: CommonForbiddenErrorBody;
+    /**
+     * The server cannot find the requested resource.
+     */
+    404: CommonNotFoundErrorBody;
 };
 
-export type ActivitiesGetError = ActivitiesGetErrors[keyof ActivitiesGetErrors];
+export type ExecutionActivitiesGetError = ExecutionActivitiesGetErrors[keyof ExecutionActivitiesGetErrors];
 
-export type ActivitiesGetResponses = {
+export type ExecutionActivitiesGetResponses = {
     /**
      * The request has succeeded.
      */
-    200: Array<ExecutionActivity>;
+    200: Array<AgentsExecutionActivity>;
 };
 
-export type ActivitiesGetResponse = ActivitiesGetResponses[keyof ActivitiesGetResponses];
+export type ExecutionActivitiesGetResponse = ExecutionActivitiesGetResponses[keyof ExecutionActivitiesGetResponses];
 
-export type ContextFilesGetData = {
+export type ExecutionContextFilesGetData = {
     body?: never;
     path: {
-        executionId: Uuid;
+        executionId: CommonUuid;
     };
     query?: never;
     url: '/executions/{executionId}/context-files';
 };
 
-export type ContextFilesGetErrors = {
+export type ExecutionContextFilesGetErrors = {
     /**
      * The server cannot find the requested resource.
      */
     404: 'Execution files not found.';
 };
 
-export type ContextFilesGetError = ContextFilesGetErrors[keyof ContextFilesGetErrors];
+export type ExecutionContextFilesGetError = ExecutionContextFilesGetErrors[keyof ExecutionContextFilesGetErrors];
 
-export type ContextFilesGetResponses = {
+export type ExecutionContextFilesGetResponses = {
     /**
      * The request has succeeded.
      */
-    200: Array<File>;
+    200: Array<AgentsFilesFile>;
 };
 
-export type ContextFilesGetResponse = ContextFilesGetResponses[keyof ContextFilesGetResponses];
+export type ExecutionContextFilesGetResponse = ExecutionContextFilesGetResponses[keyof ExecutionContextFilesGetResponses];
 
-export type UserMessagesAddData = {
+export type ExecutionContextFilesUploadData = {
+    body: {
+        files: Array<AgentsFilesFilePart>;
+    };
+    path: {
+        executionId: CommonUuid;
+    };
+    query?: never;
+    url: '/executions/{executionId}/context-files';
+};
+
+export type ExecutionContextFilesUploadErrors = {
+    /**
+     * The server could not understand the request due to invalid syntax.
+     */
+    400: 'Invalid file upload request.';
+    /**
+     * The server cannot find the requested resource.
+     */
+    404: 'Execution not found.';
+};
+
+export type ExecutionContextFilesUploadError = ExecutionContextFilesUploadErrors[keyof ExecutionContextFilesUploadErrors];
+
+export type ExecutionContextFilesUploadResponses = {
+    /**
+     * The request has succeeded.
+     */
+    200: 'Files uploaded.';
+};
+
+export type ExecutionContextFilesUploadResponse = ExecutionContextFilesUploadResponses[keyof ExecutionContextFilesUploadResponses];
+
+export type ExecutionUserMessagesAddData = {
     /**
      * The message content to send
      */
-    body: ExecutionUserMessagesAddTextBody;
+    body: AgentsExecutionUserMessagesAddTextBody;
     path: {
         /**
          * The unique identifier of the execution
          */
-        executionId: Uuid;
+        executionId: CommonUuid;
     };
     query?: never;
     url: '/executions/{executionId}/user-messages';
 };
 
-export type UserMessagesAddErrors = {
+export type ExecutionUserMessagesAddErrors = {
     /**
-     * An unexpected error response.
+     * The server could not understand the request due to invalid syntax.
      */
-    default: _Error;
+    400: CommonBadRequestErrorBody;
+    /**
+     * Access is forbidden.
+     */
+    403: CommonForbiddenErrorBody;
+    /**
+     * The server cannot find the requested resource.
+     */
+    404: CommonNotFoundErrorBody;
 };
 
-export type UserMessagesAddError = UserMessagesAddErrors[keyof UserMessagesAddErrors];
+export type ExecutionUserMessagesAddError = ExecutionUserMessagesAddErrors[keyof ExecutionUserMessagesAddErrors];
 
-export type UserMessagesAddResponses = {
+export type ExecutionUserMessagesAddResponses = {
     /**
      * The request has succeeded and a new resource has been created as a result.
      */
     201: 'User message added.';
 };
 
-export type UserMessagesAddResponse = UserMessagesAddResponses[keyof UserMessagesAddResponses];
+export type ExecutionUserMessagesAddResponse = ExecutionUserMessagesAddResponses[keyof ExecutionUserMessagesAddResponses];
 
 export type ClientOptions = {
-    baseUrl: 'https://odyssey.asteroid.ai/agents/{version}' | (string & {});
+    baseUrl: 'https://odyssey.asteroid.ai/agents/v2' | (string & {});
 };
