@@ -165,8 +165,8 @@ export type AgentProfile = {
      * The ID of the organization that the agent profile belongs to
      */
     organization_id: string;
-    proxy_cc: CountryCode;
-    proxy_type: ProxyType;
+    proxy_cc?: CountryCode;
+    proxy_type?: ProxyType;
     /**
      * Whether the captcha solver is active for this profile
      */
