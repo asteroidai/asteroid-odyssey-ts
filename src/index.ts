@@ -15,6 +15,7 @@ import type {
 import { client as agentsV1Client } from "./generated/agents-v1/client.gen";
 import { client as agentsV2Client } from "./generated/agents-v2/client.gen";
 import {
+  AgentsAgentBase,
   AgentsExecutionActivity,
   AgentsFilesFile,
 } from "./generated/agents-v2/types.gen";
@@ -678,6 +679,35 @@ export const downloadExecutionFile = async (
     }
     throw new Error("Failed to download file: Unknown error");
   }
+};
+
+/** --- V2 --- */
+
+/**
+ * Get a paginated list of agents for an organization.
+ *
+ * @param client - The API client.
+ * @param organizationId - The organization identifier.
+ * @param page - The page number.
+ * @param pageSize - The page size.
+ * @returns The list of agents.
+ */
+export const getAgents = async (
+  client: AsteroidClient,
+  organizationId: string,
+  page: number,
+  pageSize: number
+): Promise<AgentsAgentBase[]> => {
+  const response = await handleSdkCall(
+    () =>
+      AgentsV2SDK.agentList({
+        client: client.agentsV2Client,
+        query: { organizationId, page, pageSize },
+      }),
+    "get agents"
+  );
+
+  return response.items;
 };
 
 /**
