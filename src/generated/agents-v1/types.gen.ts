@@ -191,6 +191,14 @@ export type AgentProfile = {
      * The last update time of the agent profile
      */
     updated_at: string;
+    /**
+     * Whether to enable tracing snapshots for the profile
+     */
+    tracing_snapshots: boolean;
+    /**
+     * Whether to enable extra stealth for the profile
+     */
+    extra_stealth: boolean;
 };
 
 export type CreateAgentProfileRequest = {
@@ -224,6 +232,14 @@ export type CreateAgentProfileRequest = {
      * Optional list of cookies to create with the profile
      */
     cookies: Array<Cookie>;
+    /**
+     * Whether to enable tracing snapshots for the profile
+     */
+    tracing_snapshots?: boolean;
+    /**
+     * Whether to enable extra stealth for the profile
+     */
+    extra_stealth?: boolean;
 };
 
 export type UpdateAgentProfileRequest = {
@@ -261,6 +277,14 @@ export type UpdateAgentProfileRequest = {
      * List of cookie IDs to delete from the profile
      */
     cookies_to_delete?: Array<string>;
+    /**
+     * Whether to enable tracing snapshots for the profile
+     */
+    tracing_snapshots?: boolean;
+    /**
+     * Whether to enable extra stealth for the profile
+     */
+    extra_stealth?: boolean;
 };
 
 /**
