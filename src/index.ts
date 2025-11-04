@@ -711,6 +711,141 @@ export const getAgents = async (
 };
 
 /**
+ * Options for filtering and paginating executions.
+ */
+export interface GetExecutionsOptions {
+  /** Optional organization ID filter (required for customer queries) */
+  organizationId?: string;
+  /** Page number for pagination */
+  page: number;
+  /** Number of items per page */
+  pageSize: number;
+  /** Search by execution ID (partial, case-insensitive match) */
+  executionId?: string;
+  /** Filter by agent ID */
+  agentId?: string;
+  /** Filter by execution status (can specify multiple, OR condition applied) */
+  status?: Array<
+    | "starting"
+    | "running"
+    | "paused"
+    | "awaiting_confirmation"
+    | "completed"
+    | "cancelled"
+    | "failed"
+    | "paused_by_agent"
+  >;
+  /** Filter by agent version */
+  agentVersion?: number;
+  /** Filter executions created after this timestamp (ISO 8601 format) */
+  createdAfter?: string;
+  /** Filter executions created before this timestamp (ISO 8601 format) */
+  createdBefore?: string;
+  /** Filter by human labels (can specify multiple label IDs, OR condition applied) */
+  humanLabels?: string[];
+  /** Field to sort by */
+  sortField?: "created_at" | "status";
+  /** Sort direction */
+  sortDirection?: "asc" | "desc";
+}
+
+/**
+ * Response from the getExecutions function.
+ */
+export interface GetExecutionsResponse {
+  /** List of execution items */
+  items: Array<{
+    id: string;
+    agentId: string;
+    workflowId: string;
+    agentVersion: number;
+    agentVersionDirty: boolean;
+    status: string;
+    createdAt: string;
+    terminalAt?: string;
+    organizationId: string;
+    agentName: string;
+    outcome?: string;
+    duration?: number;
+    humanLabels: Array<{ id: string; name: string; color: string }>;
+    comments: Array<{
+      id: string;
+      content: string;
+      createdAt: string;
+      userId: string;
+    }>;
+  }>;
+  /** Current page number */
+  page: number;
+  /** Items per page */
+  pageSize: number;
+  /** Total number of items */
+  total: number;
+}
+
+/**
+ * Get a paginated list of executions with optional filtering.
+ *
+ * @param client - The API client.
+ * @param options - Filtering and pagination options.
+ * @returns Paginated execution list with metadata.
+ *
+ * @example
+ * // Get all executions for an organization
+ * const result = await getExecutions(client, {
+ *   organizationId: 'org_123',
+ *   page: 1,
+ *   pageSize: 20
+ * });
+ *
+ * @example
+ * // Filter by agent and status
+ * const result = await getExecutions(client, {
+ *   organizationId: 'org_123',
+ *   agentId: 'agent_456',
+ *   status: ['completed', 'failed'],
+ *   page: 1,
+ *   pageSize: 20,
+ *   sortField: 'created_at',
+ *   sortDirection: 'desc'
+ * });
+ *
+ * @example
+ * // Search by execution ID
+ * const result = await getExecutions(client, {
+ *   executionId: 'exec_',
+ *   page: 1,
+ *   pageSize: 20
+ * });
+ */
+export const getExecutions = async (
+  client: AsteroidClient,
+  options: GetExecutionsOptions
+): Promise<GetExecutionsResponse> => {
+  return handleSdkCall(
+    () =>
+      AgentsV2SDK.executionsList({
+        client: client.agentsV2Client,
+        query: {
+          organizationId: options.organizationId,
+          page: options.page,
+          pageSize: options.pageSize,
+          executionId: options.executionId,
+          agentId: options.agentId,
+          status: options.status,
+          agentVersion: options.agentVersion,
+          createdAfter: options.createdAfter,
+          createdBefore: options.createdBefore,
+          humanLabels: options.humanLabels,
+          sortField: options.sortField,
+          sortDirection: options.sortDirection,
+        },
+      }),
+    "get executions"
+  );
+};
+
+/**
  * Optionally, re-export all generated functions and types.
  */
 export * as AgentsV1SDK from "./generated/agents-v1/sdk.gen";
