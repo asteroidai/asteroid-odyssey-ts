@@ -20,6 +20,11 @@ export type ActivityActionCompletedInfoBrowserSnapshotWithSelectors = {
     info: AgentsExecutionBrowserSnapshotCompletedDetails;
 };
 
+export type ActivityActionCompletedInfoGetMail = {
+    actionName: 'get_mail';
+    info: AgentsExecutionGetMailCompletedDetails;
+};
+
 export type ActivityActionCompletedInfoGoToUrl = {
     actionName: 'go_to_url';
     info: AgentsExecutionNavigationDetails;
@@ -223,6 +228,16 @@ export type AgentsAgentExecuteAgentRequest = {
      * Array of temporary files to attach to the execution. Must have been pre-uploaded using the stage file endpoint
      */
     tempFiles?: Array<AgentsFilesTempFile>;
+    /**
+     * Optional metadata key-value pairs (string keys and string values) for organizing and filtering executions
+     */
+    metadata?: {
+        [key: string]: unknown;
+    };
+    /**
+     * The version of the agent to execute. If not provided, the latest version will be used.
+     */
+    version?: number;
 };
 
 export type AgentsAgentExecuteAgentResponse = {
@@ -234,7 +249,7 @@ export type AgentsAgentExecuteAgentResponse = {
 
 export type AgentsAgentSortField = 'name' | 'created_at';
 
-export type AgentsExecutionActionName = 'browser_navigate' | 'browser_navigate_back' | 'browser_click' | 'browser_type' | 'browser_select_option' | 'browser_wait_for' | 'browser_hover' | 'browser_drag' | 'browser_handle_dialog' | 'browser_press_key' | 'browser_take_screenshot' | 'browser_snapshot' | 'browser_evaluate' | 'browser_mouse_move_xy' | 'browser_mouse_click_xy' | 'browser_mouse_drag_xy' | 'browser_file_upload' | 'browser_tabs' | 'browser_console_messages' | 'browser_fill_form' | 'click' | 'double_click' | 'type' | 'move' | 'drag' | 'scroll' | 'screenshot' | 'keypress' | 'wait' | 'go_to_url' | 'get_text' | 'refresh_page' | 'read_clipboard' | 'list_files' | 'read_files' | 'send_user_message' | 'zoom_in' | 'zoom_out' | 'read_scratchpad' | 'write_scratchpad' | 'upload_file' | 'download_file' | 'get_execution_file' | 'upload_local_file' | 'google_sheets_get_data' | 'google_sheets_set_value' | 'generate_totp_secret' | 'get_datetime' | 'text_output' | 'reasoning' | 'url' | 'api_call' | 'playwright_script' | 'hybrid_playwright' | 'scriptpad_run_function' | 'scriptpad_read' | 'scriptpad_search_replace' | 'browser_snapshot_with_selectors';
+export type AgentsExecutionActionName = 'browser_navigate' | 'browser_navigate_back' | 'browser_click' | 'browser_type' | 'browser_select_option' | 'browser_wait_for' | 'browser_hover' | 'browser_drag' | 'browser_handle_dialog' | 'browser_press_key' | 'browser_take_screenshot' | 'browser_snapshot' | 'browser_evaluate' | 'browser_mouse_move_xy' | 'browser_mouse_click_xy' | 'browser_mouse_drag_xy' | 'browser_file_upload' | 'browser_tabs' | 'browser_console_messages' | 'browser_fill_form' | 'click' | 'double_click' | 'type' | 'move' | 'drag' | 'scroll' | 'screenshot' | 'keypress' | 'wait' | 'go_to_url' | 'get_text' | 'get_mail' | 'refresh_page' | 'read_clipboard' | 'list_files' | 'read_files' | 'send_user_message' | 'zoom_in' | 'zoom_out' | 'read_scratchpad' | 'write_scratchpad' | 'upload_file' | 'download_file' | 'get_execution_file' | 'upload_local_file' | 'google_sheets_get_data' | 'google_sheets_set_value' | 'generate_totp_secret' | 'get_datetime' | 'text_output' | 'reasoning' | 'url' | 'api_call' | 'playwright_script' | 'hybrid_playwright' | 'scriptpad_run_function' | 'scriptpad_read' | 'scriptpad_search_replace' | 'browser_snapshot_with_selectors';
 
 export type AgentsExecutionActivity = {
     id: CommonUuid;
@@ -268,6 +283,8 @@ export type AgentsExecutionActivityActionCompletedInfo = ({
 } & ActivityActionCompletedInfoUploadLocalFile) | ({
     actionName: 'browser_file_upload';
 } & ActivityActionCompletedInfoBrowserFileUpload) | ({
+    actionName: 'get_mail';
+} & ActivityActionCompletedInfoGetMail) | ({
     actionName: 'scriptpad_run_function';
 } & ActivityActionCompletedInfoScriptpadRunFunction) | ({
     actionName: 'scriptpad_read';
@@ -531,6 +548,11 @@ export type AgentsExecutionGetDatetimeDetails = {
     tzTimezoneIdentifier: string;
 };
 
+export type AgentsExecutionGetMailCompletedDetails = {
+    emailCount: number;
+    emails: Array<unknown>;
+};
+
 /**
  * Human-applied label for categorizing executions
  */
@@ -617,6 +639,12 @@ export type AgentsExecutionListItem = {
      * Comments on this execution
      */
     comments: Array<AgentsExecutionComment>;
+    /**
+     * Optional metadata key-value pairs attached to this execution
+     */
+    metadata?: {
+        [key: string]: unknown;
+    };
 };
 
 export type AgentsExecutionNavigationDetails = {
@@ -804,6 +832,21 @@ export type AgentsExecutionSearchExecutionId = string;
 export type AgentsExecutionSearchHumanLabels = Array<CommonUuid>;
 
 /**
+ * Filter by metadata key - must be used together with metadataValue
+ */
+export type AgentsExecutionSearchMetadataKey = string;
+
+/**
+ * Filter by metadata value - must be used together with metadataKey
+ */
+export type AgentsExecutionSearchMetadataValue = string;
+
+/**
+ * Filter by execution result outcome (partial, case-insensitive match)
+ */
+export type AgentsExecutionSearchOutcomeLabel = string;
+
+/**
  * Filter by execution status (can specify multiple, there is an 'OR' condition applied to these)
  */
 export type AgentsExecutionSearchStatus = Array<AgentsExecutionStatus>;
@@ -928,6 +971,18 @@ export type ExecutionsListData = {
          * Filter by human labels (can specify multiple label IDs, there is an 'OR' condition applied to these)
          */
         humanLabels?: Array<CommonUuid>;
+        /**
+         * Filter by execution result outcome (partial, case-insensitive match)
+         */
+        outcomeLabel?: string;
+        /**
+         * Filter by metadata key - must be used together with metadataValue
+         */
+        metadataKey?: string;
+        /**
+         * Filter by metadata value - must be used together with metadataKey
+         */
+        metadataValue?: string;
         sortField?: AgentsExecutionSortField;
         sortDirection?: CommonSortDirection;
     };
