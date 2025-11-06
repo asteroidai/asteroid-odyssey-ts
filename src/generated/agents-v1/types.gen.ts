@@ -295,7 +295,7 @@ export type CountryCode = 'us' | 'uk' | 'fr' | 'it' | 'jp' | 'au' | 'de' | 'fi' 
 /**
  * Type of proxy to use
  */
-export type ProxyType = 'residential' | 'mobile';
+export type ProxyType = 'basic' | 'residential' | 'mobile';
 
 export type Credential = {
     /**
@@ -329,58 +329,6 @@ export type GetOpenApiResponses = {
      */
     200: unknown;
 };
-
-export type UploadExecutionFilesData = {
-    body: {
-        /**
-         * Files to upload to the execution
-         */
-        files?: Array<Blob | File>;
-    };
-    path: {
-        /**
-         * The ID of the execution
-         */
-        id: string;
-    };
-    query?: never;
-    url: '/execution/{id}/files';
-};
-
-export type UploadExecutionFilesErrors = {
-    /**
-     * Bad request
-     */
-    400: ErrorResponse;
-    /**
-     * Unauthorized
-     */
-    401: ErrorResponse;
-    /**
-     * Execution not found
-     */
-    404: ErrorResponse;
-};
-
-export type UploadExecutionFilesError = UploadExecutionFilesErrors[keyof UploadExecutionFilesErrors];
-
-export type UploadExecutionFilesResponses = {
-    /**
-     * Files uploaded successfully
-     */
-    200: {
-        /**
-         * Success message
-         */
-        message?: string;
-        /**
-         * IDs of the uploaded files
-         */
-        file_ids?: Array<string>;
-    };
-};
-
-export type UploadExecutionFilesResponse = UploadExecutionFilesResponses[keyof UploadExecutionFilesResponses];
 
 export type HealthCheckData = {
     body?: never;

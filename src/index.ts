@@ -5,7 +5,6 @@ import { encryptWithPublicKey } from "./utils/encryption";
 import * as AgentsV1SDK from "./generated/agents-v1/sdk.gen";
 import * as AgentsV2SDK from "./generated/agents-v2/sdk.gen";
 import type {
-  StructuredAgentExecutionRequest,
   ExecutionStatusResponse,
   BrowserSessionRecordingResponse,
   AgentProfile,
@@ -18,6 +17,8 @@ import {
   AgentsAgentBase,
   AgentsExecutionActivity,
   AgentsFilesFile,
+  AgentsAgentExecuteAgentRequest,
+  ExecutionsListResponses, ExecutionsListData,
 } from "./generated/agents-v2/types.gen";
 
 /**
@@ -133,7 +134,7 @@ export type AsteroidClient = ReturnType<typeof AsteroidClient>;
 /** --- V1 --- */
 
 /**
- * Execute an agent with parameters including optional agent profile ID.
+ * Execute an agent with parameters including optional agent profile ID, dynamic data, and metadata.
  *
  * @param client - The API client.
  * @param agentId - The ID of the agent to execute.
@@ -142,27 +143,28 @@ export type AsteroidClient = ReturnType<typeof AsteroidClient>;
  *
  * @example
  * const executionId = await executeAgent(client, 'my-agent-id', {
- *   agent_profile_id: 'profile-123',
- *   dynamic_data: { input: "some dynamic value" }
+ *   agentProfileId: 'profile-123',
+ *   dynamicData: { input: "some dynamic value" },
+ *   metadata: { environment: "production", userId: "user-123" }
  * });
  */
 export const executeAgent = async (
   client: AsteroidClient,
   agentId: string,
-  executionData: StructuredAgentExecutionRequest
+  executionData: AgentsAgentExecuteAgentRequest
 ): Promise<string> => {
   const data = await handleSdkCall(
     () =>
-      AgentsV1SDK.executeAgentStructured({
-        client: client.agentsV1Client,
-        path: { id: agentId },
+      AgentsV2SDK.agentExecutePost({
+        client: client.agentsV2Client,
+        path: { agentId },
         body: executionData,
       }),
     "execute agent"
   );
 
-  // ExecutionResponse has execution_id: string
-  return data.execution_id;
+  // ExecutionResponse has executionId: string
+  return data.executionId;
 };
 
 /**
@@ -295,24 +297,24 @@ export const getBrowserSessionRecording = async (
  * @param client - The API client.
  * @param executionId - The execution identifier.
  * @param files - Array of files to upload.
- * @returns The uploaded file IDs and success message.
+ * @returns A success message.
  *
  * @example
  * const fileInput = document.getElementById('file-input') as HTMLInputElement;
  * const files = Array.from(fileInput.files || []);
  * const result = await uploadExecutionFiles(client, executionId, files);
- * console.log(result.file_ids);
+ * console.log(result); // "Files uploaded."
  */
 export const uploadExecutionFiles = async (
   client: AsteroidClient,
   executionId: string,
   files: Array<Blob | globalThis.File>
-): Promise<{ message?: string; file_ids?: string[] }> => {
+): Promise<string> => {
   return handleSdkCall(
     () =>
-      AgentsV1SDK.uploadExecutionFiles({
-        client: client.agentsV1Client,
-        path: { id: executionId },
+      AgentsV2SDK.executionContextFilesUpload({
+        client: client.agentsV2Client,
+        path: { executionId },
         body: { files },
       }),
     "upload execution files"
@@ -708,6 +710,69 @@ export const getAgents = async (
   );
 
   return response.items;
+};
+
+/**
+ * Get a paginated list of executions with optional filtering.
+ *
+ * @param client - The API client.
+ * @param options - Filtering and pagination options.
+ * @returns Paginated execution list with metadata.
+ *
+ * @example
+ * // Get all executions for an organization
+ * const result = await getExecutions(client, {
+ *   organizationId: 'org_123',
+ *   page: 1,
+ *   pageSize: 20
+ * });
+ *
+ * @example
+ * // Filter by agent and status
+ * const result = await getExecutions(client, {
+ *   organizationId: 'org_123',
+ *   agentId: 'agent_456',
+ *   status: ['completed', 'failed'],
+ *   page: 1,
+ *   pageSize: 20,
+ *   sortField: 'created_at',
+ *   sortDirection: 'desc'
+ * });
+ *
+ * @example
+ * // Search by execution ID
+ * const result = await getExecutions(client, {
+ *   executionId: 'exec_',
+ *   page: 1,
+ *   pageSize: 20
+ * });
+ */
+export const getExecutions = async (
+  client: AsteroidClient,
+  options: ExecutionsListData
+): Promise<ExecutionsListResponses["200"]> => {
+  return handleSdkCall(
+    () =>
+      AgentsV2SDK.executionsList({
+        client: client.agentsV2Client,
+        query: {
+          organizationId: options.query.organizationId,
+          page: options.query.page,
+          pageSize: options.query.pageSize,
+          executionId: options.query.executionId,
+          agentId: options.query.agentId,
+          status: options.query.status,
+          agentVersion: options.query.agentVersion,
+          createdAfter: options.query.createdAfter,
+          createdBefore: options.query.createdBefore,
+          humanLabels: options.query.humanLabels,
+          outcomeLabel: options.query.outcomeLabel,
+          sortField: options.query.sortField,
+          sortDirection: options.query.sortDirection,
+        },
+      }),
+    "get executions"
+  );
 };
 
 /**
